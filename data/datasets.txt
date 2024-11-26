@@ -1,0 +1,9 @@
+# Dataset Sources
+Harvard Weekly News Dataset:
+https://dataverse.harvard.edu/dataset
+
+Kaggle Reddit Data Science Posts:
+https://www.kaggle.com/datasets/maksymshkliarevskyi/reddit-data-science-posts
+
+Kaggle Global News Dataset:
+https://www.kaggle.com/datasets/everydaycodings/global-news-dataset
