@@ -52,11 +52,11 @@ def parse_dataset(input_file, output_file, num_rows=50000):
     print(f"Extracted {num_rows} rows and saved to {output_file}")
 
 # Example usage:
-file_path = "D:\\zDSA Project\\DataSets\\dataverse_files\\news-week-18aug24.csv"  # Path to your input dataset
-output_path = "D:\\zDSA Project\\DataSets\\dataverse_files\\extracted_dataset2.csv"  # Path to save the extracted portion
+file_path = "D:\zDSA Project\DataSets\Global_News_Dataset\Extracted_Data.csv"  # Path to your input dataset
+output_path = "D:\zDSA Project\DataSets\Global_News_Dataset\ExtractedHeadingss_Data.csv"  # Path to save the extracted portion
 
 # Extract rows 1000 to 5000
-parse_dataset(file_path, output_path, 25000)
+parse_dataset(file_path, output_path, 50)
 
 # OR Extract data from a specific date range
 # parse_dataset(file_path, output_path, date_range=('2018-01-01', '2018-12-31'))
