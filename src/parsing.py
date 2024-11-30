@@ -1,12 +1,12 @@
 import pandas as pd
 
 
-# def parse_dataset(file_path, output_path, start_row=None, end_row=None, date_range=None):
+# def parse_dataset(file_path1, output_path, start_row=None, end_row=None, date_range=None):
 #     """
 #     Parse and extract a portion of the dataset based on row range or publish_time.
 #
 #     Args:
-#         file_path (str): Path to the input dataset file.
+#         file_path1 (str): Path to the input dataset file.
 #         output_path (str): Path to save the parsed portion of the dataset.
 #         start_row (int, optional): Starting row number for extraction.
 #         end_row (int, optional): Ending row number for extraction.
@@ -16,7 +16,7 @@ import pandas as pd
 #         None
 #     """
 #     # Load the dataset
-#     dataset = pd.read_csv(file_path, delimiter=',')  # Adjust delimiter if necessary (e.g., ',' for comma)
+#     dataset = pd.read_csv(file_path1, delimiter=',')  # Adjust delimiter if necessary (e.g., ',' for comma)
 #
 #     # Check and process date range
 #     if date_range:
@@ -59,4 +59,4 @@ output_path = "D:\zDSA Project\DataSets\Global_News_Dataset\ExtractedHeadingss_D
 parse_dataset(file_path, output_path, 50)
 
 # OR Extract data from a specific date range
-# parse_dataset(file_path, output_path, date_range=('2018-01-01', '2018-12-31'))
+# parse_dataset(file_path1, output_path, date_range=('2018-01-01', '2018-12-31'))

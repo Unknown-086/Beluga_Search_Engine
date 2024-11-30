@@ -25,8 +25,8 @@ from langdetect.lang_detect_exception import LangDetectException
 #
 #
 # # Load your dataset
-# file_path = "D:\zDSA Project\DataSets\Global_News_Dataset\Extracted_Data.csv"  # Replace with your dataset's file path
-# dataset = pd.read_csv(file_path)
+# file_path1 = "D:\zDSA Project\DataSets\Global_News_Dataset\Extracted_Data.csv"  # Replace with your dataset's file path
+# dataset = pd.read_csv(file_path1)
 #
 # # Add a new column for detected language
 # dataset['detected_language'] = dataset['headline_text'].apply(detect_language)
@@ -62,8 +62,8 @@ def detect_language(text):
     except Exception:
         return "unknown"  # Handle cases where detection fails
 
-
-raw_text = "11/01/2023"
+        #  "ଗ୍ୟାସ୍-ଏସିଡିଟି ପାଇଁ ରାମବାଣ ପରି କାମ କରିବ ଏହି ୪ ଆସନ"
+raw_text = "RPy : Python meets R"
 
 # Detect the language with probabilities
 detectedLanguage = detect_language(raw_text)

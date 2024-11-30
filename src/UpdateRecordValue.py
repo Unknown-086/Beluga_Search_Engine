@@ -20,6 +20,8 @@ df = pd.read_csv(file_path)
 #     # Update the record value
 #     df.loc[condition, 'title'] = new_value  # Replace 'column_to_update' with the actual column name
 
+ID = 106574
+new_value = ''
 condition = (df['DocID'] == ID)
 df.loc[condition, 'title'] = new_value  # Replace 'column_to_update' with the actual column name
 

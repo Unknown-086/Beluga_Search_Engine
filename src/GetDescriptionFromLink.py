@@ -1,5 +1,5 @@
 from CrawlingWebLinks import CrawlUrl
 
 # usage
-url = "http://www.bay12games.com/dwarves/index.html#2023-11-01"
+url = "https://otvkhabar.in/news/health/these-yoga-asanas-will-help-you-get-rid-of-acidity-and-gas/120131"
 print(CrawlUrl.crawl_url(url, 'all'))
