@@ -6,7 +6,7 @@ import os
 DetectorFactory.seed = 0
 
 # Construct the relative path to the dataset
-file_path = os.path.join('..', 'data', 'ModifiedDatasets', 'ModifiedGlobalNewsDatasetWithDocID.csv')
+file_path = os.path.join('..', 'data', 'ModifiedDatasets', 'FilteredGlobalNewsDatasetWithDocID2.csv')
 df = pd.read_csv(file_path)
 
 # Function to detect language
@@ -16,8 +16,19 @@ def detect_language(text):
     except Exception:
         return "unknown"  # Handle cases where detection fails
 
+
+# Function to get the text for language detection
+def get_text_for_language_detection(row):
+    if pd.isna(row['title']):
+        return row['description']
+    return row['title']
+
+# Apply language detection to the appropriate column and create a new 'language' column
+df['language'] = df.apply(lambda row: detect_language(get_text_for_language_detection(row)), axis=1)
+
+
 # Apply language detection to the 'title' column and create a new 'language' column
-df['language'] = df['title'].apply(detect_language)
+# df['language'] = df['title'].apply(detect_language)
 
 # Save the updated dataset with the new 'language' column
 output_file = os.path.join('..', 'data', 'ModifiedDatasets', 'ModifiedGlobalNewsDatasetWithLanguage.csv')

@@ -56,12 +56,18 @@ from langdetect.lang_detect_exception import LangDetectException
 # Example for detecting language
 # text = "å°¼æ³Šçˆ¾èŠ±è²»æ•¸ç™¾è¬ç¾Žå…ƒå»ºé€ ä¸€åº§æ–°æ©Ÿå ´ï¼Œå¸Œæœ›è—‰æ­¤æŽ¨å‹•æ—…éŠæ¥­â€”â€”ä½†æ˜¯æ©Ÿå ´å»ºå¥½äº†ï¼Œå»æ²’æœ‰äººä¾†ã€‚"
 
+def detect_language(text):
+    try:
+        return detect(text)  # Detect language of the text
+    except Exception:
+        return "unknown"  # Handle cases where detection fails
 
-raw_text = "Î£Î¿ÎºÎ¬ÏÎ¿Ï…Î½ Î¿Î¹ Î¼Î±ÏÏ„Ï…ÏÎ¯ÎµÏ‚ Ï†Î¿Î¹Ï„Î·Ï„ÏŽÎ½ Î±Ï€ÏŒ Ï„Î¿ ÎÎµÏ€Î¬Î» Ï€Î¿Ï… Î²ÏÎ­Î¸Î·ÎºÎ±Î½ ÏƒÏ„Î· Î´Î¯Î½Î· Ï„Î¿Ï… Ï€Î¿Î»Î­Î¼Î¿Ï… ÏƒÏ„Î· ÎœÎ­ÏƒÎ· Î‘Î½Î±Ï„Î¿Î»Î® Î±Î½Î¬Î¼ÎµÏƒÎ± ÏƒÏ„Î¿ Î™ÏƒÏÎ±Î®Î» ÎºÎ±Î¹ Ï„Î¿Ï…Ï‚ Ï„ÏÎ¿Î¼Î¿ÎºÏÎ¬Ï„ÎµÏ‚ Ï„Î·Ï‚ Î§Î±Î¼Î¬Ï‚. ÎŸÎ¹ Ï†Î¿Î¹Ï„Î·Ï„Î­Ï‚ Î±Ï€ÏŒ Ï„Î¿ ÎÎµÏ€Î¬Î» ÎµÏ€Î­ÏƒÏ„ÏÎµÏˆÎ±Î½ Ï€Î¯ÏƒÏ‰ ÏƒÏ„Î·Î½ Ï€Î±Ï„ÏÎ¯Î´Î± Ï„Î¿Ï…Ï‚ Î¼Îµ Ï„Î·Î½ Ï€ÏÏŽÏ„Î· ÎµÎ¹Î´Î¹ÎºÎ® Ï€Ï„Î®ÏƒÎ· Î±Ï€ÏŒ Ï„Î¿ Î™ÏƒÏÎ±Î®Î», Î­Î³Î¹Î½Î±Î½ Î´ÎµÎºÏ„Î¿Î¯â€¦"
+
+raw_text = "11/01/2023"
 
 # Detect the language with probabilities
-detected_language = detect(raw_text)
-print(detected_language)  # Output includes all possible languages and their probabilities
+detectedLanguage = detect_language(raw_text)
+print(detectedLanguage)  # Output includes all possible languages and their probabilities
 
 
 # print(decode_text_safe(raw_text))

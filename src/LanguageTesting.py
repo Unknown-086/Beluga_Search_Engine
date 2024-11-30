@@ -15,7 +15,7 @@ def detect_language_with_constraints(text, lang_subset=['ru', 'en', 'fr']):
         return 'unknown'
 
 # raw_text = "Язык крестьян имеет пестрое разнообразие, унаследованное от феодализма. На пути к пролетариату крестьянство приносит на фабрику и завод свои местные крестьянские говоры с их фонетикой, грамматикой и лексикой, а самый процесс набора рабочих из крестьян и мобильность рабочего населения порождают другой процесс: ликвидацию. крестьянского наследства путем нивелирования особенностей местных диалектов"
-raw_text = "т"
+raw_text = "Is food in America better or worse than in other countries (France, Korea, Peru) around the world? It depends on what you mean by"
 
 language = detect_language_with_constraints(raw_text, lang_subset=['ru', 'en', 'fr'])
 print(language)  # Should output 'ru' for Russian
