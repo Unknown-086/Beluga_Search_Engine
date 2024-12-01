@@ -1,9 +1,10 @@
 import pandas as pd
+import os
 
 # Paths to your two datasets
-dataset1_path = "D:\\zDSA Project\\DataSets\\dataverse_files\\extracted_dataset1.csv"  # Replace with the actual path to the first dataset
-dataset2_path = "D:\\zDSA Project\\DataSets\\dataverse_files\\extracted_dataset2.csv"  # Replace with the actual path to the second dataset
-output_path = "D:\\zDSA Project\\DataSets\\dataverse_files\\combined_dataset.csv"  # Path to save the combined dataset
+dataset1_path = os.path.join('..','data', 'FilteredDatasets', 'ModifiedNews-week-18aug5_English.csv')  # Replace with the actual path to the first dataset
+dataset2_path = os.path.join('..','data', 'FilteredDatasets', 'ModifiedNews-week-18aug5_Non_English.csv')  # Replace with the actual path to the second dataset
+output_path = os.path.join('..', 'data',  'ModifiedDatasets', 'ModifiedNews-week-18aug6.csv')  # Path to save the combined dataset
 
 # Load the datasets
 dataset1 = pd.read_csv(dataset1_path)  # Adjust delimiter if necessary

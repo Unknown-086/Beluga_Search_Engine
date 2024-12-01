@@ -25,7 +25,7 @@ def AWS_detect_language(text):
 
 if __name__ == "__main__":
     start = time.time()
-    text = "الرئيس الأمريكي: واشنطن تسعي لتحقيق نتائج مشرفة في أفغانستان"
+    text = "Piwik &amp;#8211; eine Open-Source Webanalyse-Software als Alternative zu Google Analytics"
     language = AWS_detect_language(text)
     end = time.time()
     print(f"The detected language is: {language}")

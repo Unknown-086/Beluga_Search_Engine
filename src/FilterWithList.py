@@ -15,7 +15,7 @@ column_name = 'subreddit'  # Replace with the actual column name
 #                  'MLQuestions' , 'rstats']
 
 # Get the list of unique values in the specified column
-unique_values = ['analytics', 'deeplearning']
+unique_values = []
 
 # Create a separate filtered file for each unique value
 for value in unique_values:

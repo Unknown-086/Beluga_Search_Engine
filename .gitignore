@@ -1,4 +1,7 @@
 data/ModifiedDatasets
 /data/FilteredDatasets/
 /data/Datasets/
-/data/GoogleWebsiteInterface.html
+/data/CombiningDatasets/
+/data/ModifiedAfterDeletedData/
+src/AddLanguageColumn2.py
+src/CheckLanguageColumn2.py

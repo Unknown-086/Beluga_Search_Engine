@@ -1,4 +1,5 @@
 import boto3
+import time
 
 # Initialize a session using Amazon Translate
 translate = boto3.client('translate', region_name='us-east-1')  # Change region as needed
@@ -13,6 +14,11 @@ def translate_text(text, source_lang, target_lang):
     return response['TranslatedText']
 
 # Example usage
-source_text = "Σοκάρουν οι μαρτυρίες φοιτητών από το Νεπάλ που βρέθηκαν στη δίνη του πολέμου στη Μέση Ανατολή ανάμεσα στο Ισραήλ και τους τρομοκράτες της Χαμάς. Οι φοιτητές από το Νεπάλ επέστρεψαν πίσω στην πατρίδα τους με την πρώτη ειδική πτήση από το Ισραήλ, έγιναν δεκτοί…"
-translated_text = translate_text(source_text, "el", "en")  # Korean to English
-print(f"Translated Text: {translated_text}")
+if __name__ == "__main__":
+    start = time.time()
+    source_text = "Starting today, we're testing a new program (Not A Bot) in New Zealand and the Philippines. New, unverified accounts will be required to sign up for a $1 annual subscription to be able to post &amp; … [+119 chars]"
+    translated_text = translate_text(source_text, "ja", "en")  # Korean to English
+    end = time.time()
+    print(f"Translated Text: {translated_text}")
+    print(end - start)
+

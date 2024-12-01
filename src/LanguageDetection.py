@@ -1,6 +1,7 @@
 import pandas as pd
 from langdetect import detect, DetectorFactory, detect_langs
 from langdetect.lang_detect_exception import LangDetectException
+import time
 #
 # # Ensure consistent results from langdetect
 # DetectorFactory.seed = 0
@@ -63,12 +64,14 @@ def detect_language(text):
         return "unknown"  # Handle cases where detection fails
 
         #  "ଗ୍ୟାସ୍-ଏସିଡିଟି ପାଇଁ ରାମବାଣ ପରି କାମ କରିବ ଏହି ୪ ଆସନ"
-raw_text = "RPy : Python meets R"
+raw_text = "AI Art Contest"
 
+start = time.time()
 # Detect the language with probabilities
 detectedLanguage = detect_language(raw_text)
+end = time.time()
 print(detectedLanguage)  # Output includes all possible languages and their probabilities
-
+print(end - start)
 
 # print(decode_text_safe(raw_text))
 

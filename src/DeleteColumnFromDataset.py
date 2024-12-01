@@ -2,7 +2,7 @@ import pandas as pd
 import os
 
 # Construct the relative path to the dataset
-file_path = os.path.join('..', 'data', 'ModifiedDatasets', 'ModifiedGlobalNewsDataset5.csv')
+file_path = os.path.join('..', 'data', 'ModifiedDatasets', 'ModifiedReddit_database9.csv')
 df = pd.read_csv(file_path)
 
 # Specify the column to be deleted
@@ -16,7 +16,7 @@ else:
     print(f"Column '{column_to_delete}' does not exist in the dataset.")
 
 # Save the updated dataset to a new file
-output_file = os.path.join('..', 'data', 'ModifiedDatasets', 'ModifiedGlobalNewsDataset6.csv')
+output_file = os.path.join('..', 'data', 'ModifiedDatasets', 'ModifiedReddit_database9_WithoutDocID.csv')
 df.to_csv(output_file, index=False)
 
 print(f"Updated dataset without the column saved to {output_file}")
