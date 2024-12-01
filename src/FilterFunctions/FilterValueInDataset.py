@@ -2,7 +2,7 @@ import pandas as pd
 import os
 
 # Construct the relative path to the dataset
-file_path = os.path.join('..', 'data', 'ModifiedDatasets', 'ModifiedReddit_database8_sorted.csv')
+file_path = os.path.join('../..', 'data', 'ModifiedDatasets', 'ModifiedReddit_database8_sorted.csv')
 df = pd.read_csv(file_path)
 
 # Specify the column and the value to filter by
@@ -23,7 +23,7 @@ filtered_df = df[df[column_name] != specific_value]
 print(filtered_df)
 
 # Optionally, save the filtered records to a new file
-output_file = os.path.join('..', 'data', 'FilteredDatasets', 'ModifiedReddit_database8_Non_English.csv')
+output_file = os.path.join('../..', 'data', 'FilteredDatasets', 'ModifiedReddit_database8_Non_English.csv')
 filtered_df.to_csv(output_file, index=False)
 
 print(f"Filtered records saved to {output_file}")

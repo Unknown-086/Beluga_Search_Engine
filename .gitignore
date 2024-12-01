@@ -3,5 +3,5 @@ data/ModifiedDatasets
 /data/Datasets/
 /data/CombiningDatasets/
 /data/ModifiedAfterDeletedData/
-src/AddLanguageColumn2.py
-src/CheckLanguageColumn2.py
+src/AddFunctions/AddLanguageColumn2.py
+src/LanguageFunctions/CheckLanguageColumn2.py

@@ -1,9 +1,9 @@
-from CrawlingWebLinks import CrawlUrl
+from src.CrawlingWebLinks import CrawlUrl
 import pandas as pd
 import os
 
 # Construct the relative path to the dataset
-file_path = os.path.join('..', 'data', 'ModifiedDatasets', 'ModifiedGlobalNewsDatasetWithLanguage.csv')
+file_path = os.path.join('../..', 'data', 'ModifiedDatasets', 'ModifiedGlobalNewsDatasetWithLanguage.csv')
 df = pd.read_csv(file_path)
 
 # Specify the condition to locate the record and the new value

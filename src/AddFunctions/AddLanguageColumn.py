@@ -1,5 +1,5 @@
 import pandas as pd
-from WebTranslateAPI import AWSLanguageDetect
+from src.WebTranslateAPI import AWSLanguageDetect
 from langdetect import detect, DetectorFactory
 import os
 
@@ -7,7 +7,7 @@ import os
 DetectorFactory.seed = 0
 
 # Construct the relative path to the dataset
-file_path = os.path.join('..', 'data', 'ModifiedDatasets', 'ModifiedNews-week-18aug2.csv')
+file_path = os.path.join('../..', 'data', 'ModifiedDatasets', 'ModifiedNews-week-17aug3.csv')
 df = pd.read_csv(file_path)
 
 # Function to detect language
@@ -30,7 +30,7 @@ def get_text_for_language_detection(row):
 df['language'] = df['headline_text'].apply(detect_language)
 
 # Save the updated dataset with the new 'language' column
-output_file = os.path.join('..', 'data', 'ModifiedDatasets', 'ModifiedNews-week-18aug_Language_3.csv')
+output_file = os.path.join('../..', 'data', 'ModifiedDatasets', 'ModifiedNews-week-17aug_Language_4.csv')
 df.to_csv(output_file, index=False)
 
 print(f"Updated dataset with language column saved to {output_file}")

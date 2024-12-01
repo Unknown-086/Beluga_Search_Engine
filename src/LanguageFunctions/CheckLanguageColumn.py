@@ -7,7 +7,7 @@ import os
 DetectorFactory.seed = 0
 
 # Construct the relative path to the dataset
-file_path = os.path.join('..', 'data', 'FilteredDatasets', 'FilteredGlobalNewsDataset8_Non_English.csv')
+file_path = os.path.join('../..', 'data', 'FilteredDatasets', 'FilteredGlobalNewsDataset8_Non_English.csv')
 df = pd.read_csv(file_path)
 
 # Function to detect language
@@ -29,7 +29,7 @@ df['language'] = df.apply(lambda row: AWS_detect_language(get_text_for_language_
 # Filter the records by matching the detected language code with the language code in the dataset
 
 # Save the filtered records to a new file
-output_file = os.path.join('..', 'data', 'FilteredDatasets', 'FilteredGlobalNewsDataset8_Non_English_AWS.csv')
+output_file = os.path.join('../..', 'data', 'FilteredDatasets', 'FilteredGlobalNewsDataset8_Non_English_AWS.csv')
 df.to_csv(output_file, index=False)
 
 print(f"Updates records saved to {output_file}")

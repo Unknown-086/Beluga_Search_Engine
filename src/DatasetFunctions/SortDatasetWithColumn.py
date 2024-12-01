@@ -2,7 +2,7 @@ import pandas as pd
 import os
 
 # Construct the relative path to the dataset
-file_path = os.path.join('..', 'data', 'ModifiedDatasets', 'ModifiedGlobalNewsDataset10_MoveColumn.csv')
+file_path = os.path.join('../..', 'data', 'ModifiedDatasets', 'ModifiedGlobalNewsDataset10_MoveColumn.csv')
 df = pd.read_csv(file_path)
 
 # Specify the column to sort by
@@ -21,7 +21,7 @@ sorted_df = df.sort_values(by=column_name, ascending=True)
 print(sorted_df)
 
 # Optionally, save the sorted records to a new file
-output_file = os.path.join('..', 'data', 'ModifiedDatasets', 'ModifiedGlobalNewsDataset10_sorted.csv')
+output_file = os.path.join('../..', 'data', 'ModifiedDatasets', 'ModifiedGlobalNewsDataset10_sorted.csv')
 sorted_df.to_csv(output_file, index=False)
 
 print(f"Sorted records saved to {output_file}")

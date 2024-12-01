@@ -2,7 +2,7 @@ import pandas as pd
 import os
 
 # Construct the relative path to the dataset
-file_path = os.path.join('..', 'data', 'FilteredDatasets', 'FilteredNews-week-17aug5_Non_English.csv')
+file_path = os.path.join('../..', 'data', 'FilteredDatasets', 'FilteredNews-week-17aug5_Non_English.csv')
 df = pd.read_csv(file_path)
 
 # Specify the column name and the value to filter out
@@ -27,7 +27,7 @@ df_filtered = df.iloc[::N]
 
 print(len(df_filtered))
 # Save the updated dataset to a new file
-output_file = os.path.join('..', 'data', 'FilteredDatasets', 'FilteredNews-week-17aug5_Non_English_6.csv')
+output_file = os.path.join('../..', 'data', 'FilteredDatasets', 'FilteredNews-week-17aug5_Non_English_6.csv')
 df_filtered.to_csv(output_file, index=False)
 
 # print(f"Rows with {column_name} = {value} have been deleted and saved to {output_file}")

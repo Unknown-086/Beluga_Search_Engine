@@ -2,7 +2,7 @@ import pandas as pd
 import os
 
 # Load the CSV file
-file_path1 = os.path.join('..', 'data', 'FilteredDatasets', 'FilteredReddit_database3.csv')
+file_path1 = os.path.join('../..', 'data', 'FilteredDatasets', 'FilteredReddit_database3.csv')
 # file_path2 = os.path.join('..', 'data', 'ModifiedDatasets', 'ModifiedGlobalNewsDataset7.csv')
 
 
@@ -22,13 +22,13 @@ file_paths = [
                 # os.path.join('..', 'data', 'FilteredDatasets', 'FilteredNews-week-17aug5_Non_English_6.csv')
 
 
-                os.path.join('..', 'data', 'ModifiedDatasets', 'ModifiedGlobalNewsDataset10.csv'),
+                os.path.join('../..', 'data', 'ModifiedDatasets', 'ModifiedGlobalNewsDataset10.csv'),
 
-                os.path.join('..', 'data', 'ModifiedDatasets', 'ModifiedReddit_database8.csv'),
+                os.path.join('../..', 'data', 'ModifiedDatasets', 'ModifiedReddit_database8.csv'),
 
-                os.path.join('..', 'data', 'ModifiedDatasets', 'ModifiedNews-week-17aug6.csv'),
+                os.path.join('../..', 'data', 'ModifiedDatasets', 'ModifiedNews-week-17aug6.csv'),
 
-                os.path.join('..', 'data', 'ModifiedDatasets', 'ModifiedNews-week-18aug5.csv')
+                os.path.join('../..', 'data', 'ModifiedDatasets', 'ModifiedNews-week-18aug5.csv')
                 # os.path.join('..', 'data', 'ModifiedDatasets', 'ModifiedReddit_database7.csv')
 ]
 

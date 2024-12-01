@@ -2,7 +2,7 @@ import pandas as pd
 import os
 
 # Construct the relative path to the dataset
-file_path = os.path.join('..', 'data', 'FilteredDatasets', 'FilteredNews-week-17aug1.csv')
+file_path = os.path.join('../..', 'data', 'FilteredDatasets', 'FilteredNews-week-17aug1.csv')
 df = pd.read_csv(file_path)
 
 # Specify the range of rows and the column name

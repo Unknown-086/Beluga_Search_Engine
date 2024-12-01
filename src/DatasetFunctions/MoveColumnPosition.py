@@ -2,7 +2,7 @@ import pandas as pd
 import os
 
 # Construct the relative path to the dataset
-file_path = os.path.join('..', 'data', 'ModifiedDatasets', 'ModifiedGlobalNewsDataset10.csv')
+file_path = os.path.join('../..', 'data', 'ModifiedDatasets', 'ModifiedGlobalNewsDataset10.csv')
 df = pd.read_csv(file_path)
 
 # Specify the column to move and its new position
@@ -19,7 +19,7 @@ columns.insert(new_position, columns.pop(columns.index(column_to_move)))
 df = df[columns]
 
 # Save the updated dataset to a new file
-output_file = os.path.join('..', 'data', 'ModifiedDatasets', 'ModifiedGlobalNewsDataset10_MoveColumn.csv')
+output_file = os.path.join('../..', 'data', 'ModifiedDatasets', 'ModifiedGlobalNewsDataset10_MoveColumn.csv')
 df.to_csv(output_file, index=False)
 
 print(f"Updated dataset saved to {output_file}")
