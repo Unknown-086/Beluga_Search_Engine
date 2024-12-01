@@ -17,7 +17,7 @@ def preprocessText(text):
         return []  # Return empty list for invalid or missing text
     text = text.lower()  # Convert to lowercase
     text = re.sub(r'[^\w\s]', '', text)  # Remove punctuation
-    return word_tokenize(text)  # Use NLTK for tokenization
+    return re.findall(r'\b\w+\b', text)  # Tokenize using regex
 
 
 
@@ -30,25 +30,25 @@ def buildLexicon(datasetPaths, ColumnLists):
 
     startID = 1
     lexicon = defaultdict(lambda: len(lexicon) + startID)  # Assign unique IDs starting from 1
-    print(len(lexicon))
     currentID = len(lexicon) + startID
 
     for datasetPath, columnList in zip(datasetPaths, ColumnLists):
         print(f"Processing dataset: {datasetPath}")
         try:
-            df = pd.read_csv(datasetPath)
-            for column in columnList:
-                if column not in df.columns:
-                    print(f"Warning: Column '{column}' not found in the dataset '{datasetPath}'.")
-                    continue
+            for chunk in pd.read_csv(datasetPath, chunksize=1000):
+                for column in columnList:
+                    if column not in chunk.columns:
+                        print(f"Warning: Column '{column}' not found in the dataset '{datasetPath}'.")
+                        continue
 
-                for text in df[column]:
-                    if pd.notna(text):
-                        words = preprocessText(text) # get a list of required words from the text
+                    chunk[column] = chunk[column].fillna('').apply(preprocessText)
+                    for text in chunk[column]:
+                        words = set(text) # Avoid Duplicate for the local Record
                         for word in words:
                             if word not in lexicon:
                                 lexicon[word] = currentID
                                 currentID += 1
+
 
         except FileNotFoundError:
             print(f"Error: File '{datasetPath}' not found.")

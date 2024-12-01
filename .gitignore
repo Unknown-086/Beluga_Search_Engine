@@ -3,6 +3,4 @@ data/ModifiedDatasets
 /data/Datasets/
 /data/CombiningDatasets/
 /data/ModifiedAfterDeletedData/
-src/AddFunctions/AddLanguageColumn2.py
-src/LanguageFunctions/CheckLanguageColumn2.py
-/data/Lexicons/LexiconGlobalNewsDataset13_English.json
+/data/Lexicons/
