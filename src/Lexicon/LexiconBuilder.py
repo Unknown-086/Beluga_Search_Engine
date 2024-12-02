@@ -35,7 +35,7 @@ def buildLexicon(datasetPaths, ColumnLists):
     for datasetPath, columnList in zip(datasetPaths, ColumnLists):
         print(f"Processing dataset: {datasetPath}")
         try:
-            for chunk in pd.read_csv(datasetPath, chunksize=1000):
+            for chunk in pd.read_csv(datasetPath, chunksize = 10_000):
                 for column in columnList:
                     if column not in chunk.columns:
                         print(f"Warning: Column '{column}' not found in the dataset '{datasetPath}'.")
