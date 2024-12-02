@@ -1,24 +1,8 @@
+import os
 import pandas as pd
-from nltk.tokenize import word_tokenize
-import re
+from TextPreprocess import preprocessText, preprocessLanguageText
 from collections import defaultdict
 import orjson
-
-
-def preprocessText(text):
-    """
-        Preprocess text by:
-        - Converting to lowercase
-        - Removing punctuation
-        - Tokenizing into words using NLTK
-    """
-
-    if not isinstance(text, str):
-        return []  # Return empty list for invalid or missing text
-    text = text.lower()  # Convert to lowercase
-    text = re.sub(r'[^\w\s]', '', text)  # Remove punctuation
-    return re.findall(r'\b\w+\b', text)  # Tokenize using regex
-
 
 
 def buildLexicon(datasetPaths, ColumnLists):
@@ -41,7 +25,11 @@ def buildLexicon(datasetPaths, ColumnLists):
                         print(f"Warning: Column '{column}' not found in the dataset '{datasetPath}'.")
                         continue
 
-                    chunk[column] = chunk[column].fillna('').apply(preprocessText)
+                    chunk[column] = chunk[column].fillna('')
+                    chunk[column] = chunk.apply(lambda row: preprocessLanguageText(row[column], row['language'])
+                                                    if row['language'] != 'en'
+                                                    else preprocessText(row[column]), axis=1)
+
                     for text in chunk[column]:
                         words = set(text) # Avoid Duplicate for the local Record
                         for word in words:
@@ -65,6 +53,9 @@ def saveLexiconToJSON(lexicon, outputPath):
     :param outputPath: Path to the output JSON file
     """
     try:
+        # Ensure the directory exists or create it
+        os.makedirs(os.path.dirname(outputPath), exist_ok=True)
+
         with open(outputPath, 'wb') as json_file:
             json_file.write(orjson.dumps(lexicon, option=orjson.OPT_INDENT_2))
     except Exception as e:
