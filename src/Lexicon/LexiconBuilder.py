@@ -14,7 +14,6 @@ def buildLexicon(datasetPaths, ColumnLists):
 
     startID = 1
     lexicon = defaultdict(lambda: len(lexicon) + startID)  # Assign unique IDs starting from 1
-    currentID = len(lexicon) + startID
 
     for datasetPath, columnList in zip(datasetPaths, ColumnLists):
         print(f"Processing dataset: {datasetPath}")
@@ -25,17 +24,16 @@ def buildLexicon(datasetPaths, ColumnLists):
                         print(f"Warning: Column '{column}' not found in the dataset '{datasetPath}'.")
                         continue
 
+                    # Fill missing values
                     chunk[column] = chunk[column].fillna('')
-                    chunk[column] = chunk.apply(lambda row: preprocessLanguageText(row[column], row['language'])
-                                                    if row['language'] != 'en'
-                                                    else preprocessText(row[column]), axis=1)
 
+                    # Preprocess text
+                    chunk[column] = chunk[column].apply(preprocessText)
+
+                    # Update lexicon
                     for text in chunk[column]:
-                        words = set(text) # Avoid Duplicate for the local Record
-                        for word in words:
-                            if word not in lexicon:
-                                lexicon[word] = currentID
-                                currentID += 1
+                        words = set(text)  # Avoid duplicates within a single text
+                        lexicon.update({word: lexicon[word] for word in words})
 
 
         except FileNotFoundError:
