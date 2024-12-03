@@ -6,4 +6,3 @@ data/ModifiedDatasets/*
 /data/Lexicons/*
 /data/ForwardIndexData/*
 /data/InvertedIndexData/*
-/data/InvertedIndexData/placeHolderFile/.gitkeep
