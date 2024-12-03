@@ -1,6 +1,6 @@
 import os
 import time
-from InvertedIndexBuilder import buildInvertedIndex
+from src.InvertedIndex.InvertedIndexBuilder import buildInvertedIndex
 
 # Main execution
 if __name__ == "__main__":

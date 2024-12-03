@@ -4,7 +4,7 @@ import pandas as pd
 import orjson
 import json
 from collections import defaultdict
-from src.Lexicon.TextPreprocess import preprocessText, preprocessLanguageText
+from src.Lexicon.TextPreprocess import preprocessText
 
 
 def preprocessTextWithPositions(text):

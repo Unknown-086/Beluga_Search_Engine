@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from TextPreprocess import preprocessText, preprocessLanguageText
+from src.Lexicon.TextPreprocess import preprocessText, preprocessLanguageText
 from collections import defaultdict
 import orjson
 

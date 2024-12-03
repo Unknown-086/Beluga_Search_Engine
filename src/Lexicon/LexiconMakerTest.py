@@ -14,7 +14,7 @@ if __name__ == "__main__":
     ]
 
     startTime = time.time()
-    lexiconOutputPath = os.path.join('../..', 'data', 'Lexicons', 'LexiconModifiedGlobalNewsDataset13_7.json')
+    lexiconOutputPath = os.path.join('../..', 'data', 'Lexicons', 'LexiconModifiedGlobalNewsDataset13_7_8.json')
 
     print("Building the combined lexicon...")
     lexicon = buildLexicon(datasetsPaths, columnLists)
