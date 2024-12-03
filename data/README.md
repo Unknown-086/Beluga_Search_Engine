@@ -23,22 +23,34 @@ This folder stores all the datasets, indexes, and lexicons used or generated in 
 - Stores filtered versions of the datasets based on specific criteria, such as removing irrelevant rows or limiting datasets to certain topics.
 
 ### 4. `ForwardIndexData/`
-- Contains the generated forward index files.
-- Each file maps document IDs to the words they contain along with positional information.
+- #### `SampleTesting/`
+  - Contains sample forward index files used for testing the forward index generation process.
+- #### `Testing/`
+  - Contains the generated forward index files.
+  - Each file maps document IDs to the words they contain along with positional information.
 
 ### 5. `InvertedIndexData/`
-- Contains the generated inverted index files.
-- Each file maps Word IDs to the list of document IDs where they appear.
+- #### `SampleTesting/`
+  - Contains sample inverted index files used for testing the inverted index generation process.
+- #### `Testing/`
+  - Contains the generated inverted index files.
+  - Each file maps Word IDs to the list of document IDs where they appear.
 
 ### 6. `Lexicons/`
-- Stores lexicon files which map words to unique Word IDs.
-- These files are critical for building forward and inverted indexes.
+- #### `SampleTesting/`
+  - Contains sample lexicon files used for testing the lexicon generation process.
+- #### `Testing/`
+  - Stores lexicon files which map words to unique Word IDs.
+  - These files are critical for building forward and inverted indexes.
 
 ### 7. `ModifiedAfterDeletedData/`
 - Stores updated datasets after rows or columns are deleted during preprocessing.
 
 ### 8. `ModifiedDatasets/`
 - Contains modified datasets after transformations or additions (e.g., language translations, structure updates).
+
+### 9. `SampleDatasets_ForTesting/`
+- Contains sample datasets used for testing Lexicon, Forward Index, and Inverted Index generation.
 
 ---
 
