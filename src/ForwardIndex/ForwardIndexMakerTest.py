@@ -8,20 +8,20 @@ from src.ForwardIndex.ForwardIndexBuilder import buildForwardIndex, saveForwardI
 if __name__ == "__main__":
     # File paths and configuration
     datasetPaths = [
-        os.path.join('../..', 'data', 'SampleDatasets_ForTesting', 'GlobalNewsDataset_Sample_1000.csv'),
-        os.path.join('../..', 'data', 'SampleDatasets_ForTesting', 'RedditDataset_Sample_1000.csv'),
-        os.path.join('../..', 'data', 'SampleDatasets_ForTesting', 'WeeklyNewsDataset_Aug17_1000.csv'),
-        os.path.join('../..', 'data', 'SampleDatasets_ForTesting', 'WeeklyNewsDataset_Aug18_1000.csv')
+        os.path.join('../..', 'data', 'SampleDatasets_ForTesting', 'GlobalNewsDataset_Sample_5000.csv'),
+        os.path.join('../..', 'data', 'SampleDatasets_ForTesting', 'RedditDataset_Sample_5000.csv'),
+        os.path.join('../..', 'data', 'SampleDatasets_ForTesting', 'WeeklyNewsDataset_Aug17_5000.csv'),
+        os.path.join('../..', 'data', 'SampleDatasets_ForTesting', 'WeeklyNewsDataset_Aug18_5000.csv')
     ]
 
     columnLists = [
         [ 'published_at', 'source_name', 'author', 'title', 'description', 'content', 'category', 'full_content' ],
-        [ 'date', 'subreddit', 'title', 'author', 'domain' ],
+        [ 'date', 'subreddit', 'title', 'author' ],
         [ 'publish_time', 'feed_code', 'headline_text'] ,
         [ 'publish_time', 'feed_code', 'headline_text' ]
     ]
-    lexiconFilePath = os.path.join('../..', 'data', 'Lexicons', 'SampleTesting', 'Lexicon_1000.json')
-    outputFilePath = os.path.join('../..', 'data', 'ForwardIndexData', 'SampleTesting', 'ForwardIndex_1000.json')
+    lexiconFilePath = os.path.join('../..', 'data', 'Lexicons', 'SampleTesting', 'Lexicon_5000.json')
+    outputFilePath = os.path.join('../..', 'data', 'ForwardIndexData', 'SampleTesting', 'ForwardIndex_5000.json')
 
     start = time.time()
     print("Loading lexicon...")
