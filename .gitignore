@@ -4,3 +4,5 @@ data/ModifiedDatasets
 /data/CombiningDatasets/
 /data/ModifiedAfterDeletedData/
 /data/Lexicons/
+/data/ForwardIndexData/
+/data/InvertedIndexData/
