@@ -3,6 +3,6 @@ data/ModifiedDatasets/*
 /data/Datasets/*
 /data/CombiningDatasets/*
 /data/ModifiedAfterDeletedData/*
-/data/Lexicons/*
-/data/ForwardIndexData/*
-/data/InvertedIndexData/*
+/data/Lexicons/Testing/*
+/data/ForwardIndexData/Testing/*
+/data/InvertedIndexData/Testing/*
