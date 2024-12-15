@@ -1,4 +1,5 @@
 import json
+import time
 from collections import defaultdict
 
 def buildInvertedIndex(forward_index_path, output_file_path):
@@ -21,7 +22,10 @@ def buildInvertedIndex(forward_index_path, output_file_path):
                 inverted_index[word_id].add(doc_id)
 
         # Convert sets to lists for JSON serialization and sort by word_id
+        start = time.time()
         sorted_inverted_index = {int(word_id): list(doc_ids) for word_id, doc_ids in sorted(inverted_index.items(), key=lambda item: int(item[0]))}
+        end = time.time()
+        print(f"Sorting and converting to list took {end - start} seconds.")
 
         print(f"Saving inverted index to {output_file_path}...")
         with open(output_file_path, 'w') as output_file:  # Use 'w' for writing text files

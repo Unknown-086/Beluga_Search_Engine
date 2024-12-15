@@ -4,12 +4,12 @@ from src.Barrels.BarrelMaker1 import createBarrels
 
 # Main execution
 if __name__ == "__main__":
-    invertedIndexPath = os.path.join('../..', 'data', 'InvertedIndexData', 'SampleTesting', 'InvertedIndex_1000.json')
-    barrelOutputDirectory = os.path.join('../..', 'data', 'BarrelData', 'SampleTesting')
-    metadataPath = os.path.join('../..', 'data', 'BarrelData', 'SampleTesting', 'barrel_metadata.json')
+    invertedIndexPath = os.path.join('../..', 'data', 'InvertedIndexData', 'SampleTesting', 'InvertedIndex_5000.json')
+    barrelOutputDirectory = os.path.join('../..', 'data', 'BarrelData', 'SampleTesting', 'Barrels', 'Barrels_5000')
+    metadataPath = os.path.join('../..', 'data', 'BarrelData', 'SampleTesting', 'PathData', 'barrel_metadata_5000.json')
 
-    targetBarrelSize = 5000  # Maximum number of DocumentIDs per barrel
-    tolerance = 1000  # Allowable range for barrel sizes
+    targetBarrelSize = 5_000  # Maximum number of DocumentIDs per barrel
+    tolerance = 1_000  # Allowable range for barrel sizes
 
     start = time.time()
     print("Creating barrels...")

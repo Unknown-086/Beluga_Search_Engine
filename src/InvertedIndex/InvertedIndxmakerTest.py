@@ -4,8 +4,8 @@ from src.InvertedIndex.InvertedIndexBuilder import buildInvertedIndex
 
 # Main execution
 if __name__ == "__main__":
-    forwardIndexPath = os.path.join('../..', 'data', 'ForwardIndexData', 'SampleTesting', 'ForwardIndex_1000.json')
-    invertedIndexPath = os.path.join('../..', 'data', 'InvertedIndexData', 'SampleTesting', 'InvertedIndex_1000.json')
+    forwardIndexPath = os.path.join('../..', 'data', 'ForwardIndexData', 'Testing', 'ForwardIndex_GlobalNews_English2.json')
+    invertedIndexPath = os.path.join('../..', 'data', 'InvertedIndexData', 'Testing', 'InvertedIndex_GlobalNews_English2.json')
 
     start = time.time()
     print("Building inverted index...")
