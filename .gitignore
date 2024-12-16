@@ -6,3 +6,4 @@ data/ModifiedDatasets/*
 /data/Lexicons/Testing/*
 /data/ForwardIndexData/Testing/*
 /data/InvertedIndexData/Testing/*
+/data/BarrelData/Testing/*

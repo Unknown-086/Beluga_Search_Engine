@@ -1,14 +1,6 @@
 import os
 import json
 
-import os
-import json
-from collections import defaultdict
-
-import os
-import json
-from collections import defaultdict
-
 def createBarrels(inverted_index_path, output_directory, metadata_path, target_barrel_size, tolerance=1000):
     """
     Create balanced barrels from the inverted index.
