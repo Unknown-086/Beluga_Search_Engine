@@ -1,7 +1,7 @@
 import os
 import time
-from src.Barrels.BarrelMaker1 import createBarrels
-from src.Barrels.BarrelMaker2 import createHashedBarrels
+from src.Barrels.BarrelMakerRange import createBarrels
+from src.Barrels.BarrelMakerHash import createHashedBarrels
 
 # Main execution
 if __name__ == "__main__":

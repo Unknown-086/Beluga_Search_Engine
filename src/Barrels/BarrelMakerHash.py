@@ -49,3 +49,40 @@ def createHashedBarrels(inverted_index_path, output_directory, metadata_path, nu
     except Exception as e:
         print(f"Unexpected error while processing: {e}")
 
+def getBarrelForHashed(word_id, metadata_path, num_barrels):
+    """
+    Retrieve the barrel path and DocumentIDs for a WordID using the hashed barrel method.
+    :param word_id: The WordID to retrieve.
+    :param metadata_path: Path to the hashed barrel metadata JSON file.
+    :param num_barrels: Number of barrels used in the hashing process.
+    :return: Barrel path and list of DocumentIDs for the WordID (if found).
+    """
+    try:
+        print("Loading hashed barrel metadata...")
+        with open(metadata_path, 'r') as metadata_file:
+            barrel_metadata = json.load(metadata_file)
+
+        # Compute the hashed barrel index
+        barrel_index = word_id % num_barrels
+        print(f"Hashed barrel index: {barrel_index}")
+        barrel_key = str(barrel_index)
+
+        if barrel_key not in barrel_metadata:
+            print(f"Barrel index {barrel_key} not found in metadata.")
+            return None, []
+
+        barrel_path = barrel_metadata[barrel_key]
+
+        print(f"Loading barrel from {barrel_path}...")
+        with open(barrel_path, 'r') as barrel_file:
+            barrel_data = json.load(barrel_file)
+
+        doc_ids = barrel_data.get(str(word_id), [])
+        return barrel_path, doc_ids
+
+    except FileNotFoundError:
+        print(f"Error: File '{metadata_path}' not found.")
+        return None, []
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return None, []

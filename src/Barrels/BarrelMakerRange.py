@@ -104,3 +104,37 @@ def createBarrels(inverted_index_path, output_directory, metadata_path, target_b
         print(f"Error: Inverted index file '{inverted_index_path}' not found.")
     except Exception as e:
         print(f"Unexpected error while processing: {e}")
+
+
+def getBarrelForRanged(word_id, metadata_path):
+    """
+    Retrieve the barrel path and DocumentIDs for a WordID using the ranged barrel method.
+    :param word_id: The WordID to retrieve.
+    :param metadata_path: Path to the ranged barrel metadata JSON file.
+    :return: Barrel path and list of DocumentIDs for the WordID (if found).
+    """
+    try:
+        print("Loading ranged barrel metadata...")
+        with open(metadata_path, 'r') as metadata_file:
+            barrel_metadata = json.load(metadata_file)
+
+        # Locate the range containing the WordID
+        for range_key, barrel_path in barrel_metadata.items():
+            start, end = map(int, range_key.split('-'))
+            if start <= word_id <= end:
+                print(f"Loading barrel from {barrel_path}...")
+                with open(barrel_path, 'r') as barrel_file:
+                    barrel_data = json.load(barrel_file)
+
+                doc_ids = barrel_data.get(str(word_id), [])
+                return barrel_path, doc_ids
+
+        print(f"WordID {word_id} not found in any range.")
+        return None, []
+
+    except FileNotFoundError:
+        print(f"Error: File '{metadata_path}' not found.")
+        return None, []
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return None, []
