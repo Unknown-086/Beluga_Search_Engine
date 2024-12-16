@@ -1,6 +1,9 @@
 import os
 import json
 
+from sympy import numer
+
+
 def createHashedBarrels(inverted_index_path, output_directory, metadata_path, num_barrels):
     """
     Create barrels by hashing WordIDs to distribute them across a fixed number of barrels.
@@ -35,7 +38,7 @@ def createHashedBarrels(inverted_index_path, output_directory, metadata_path, nu
                 json.dump(barrel, barrel_file, indent=2)
 
             # Update metadata with the barrel path
-            barrel_metadata[str(i)] = barrel_path
+            barrel_metadata[str(i + 1)] = barrel_path
 
         # Save the metadata to a JSON file
         print(f"Saving barrel metadata to {metadata_path}...")
@@ -49,12 +52,11 @@ def createHashedBarrels(inverted_index_path, output_directory, metadata_path, nu
     except Exception as e:
         print(f"Unexpected error while processing: {e}")
 
-def getBarrelForHashed(word_id, metadata_path, num_barrels):
+def getBarrelForHashed(word_id, metadata_path):
     """
     Retrieve the barrel path and DocumentIDs for a WordID using the hashed barrel method.
     :param word_id: The WordID to retrieve.
     :param metadata_path: Path to the hashed barrel metadata JSON file.
-    :param num_barrels: Number of barrels used in the hashing process.
     :return: Barrel path and list of DocumentIDs for the WordID (if found).
     """
     try:
@@ -62,9 +64,11 @@ def getBarrelForHashed(word_id, metadata_path, num_barrels):
         with open(metadata_path, 'r') as metadata_file:
             barrel_metadata = json.load(metadata_file)
 
-        # Compute the hashed barrel index
-        barrel_index = word_id % num_barrels
-        print(f"Hashed barrel index: {barrel_index}")
+        # Determine the number of barrels from the metadata
+        num_barrels = max(int(key) for key in barrel_metadata.keys())
+
+        # Compute the hashed barrel index (starting from 1)
+        barrel_index = word_id % num_barrels + 1  # Adjust for 1-based indexing
         barrel_key = str(barrel_index)
 
         if barrel_key not in barrel_metadata:
