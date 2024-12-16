@@ -1,5 +1,12 @@
 import os
 import json
+
+import os
+import json
+from collections import defaultdict
+
+import os
+import json
 from collections import defaultdict
 
 def createBarrels(inverted_index_path, output_directory, metadata_path, target_barrel_size, tolerance=1000):
@@ -35,17 +42,43 @@ def createBarrels(inverted_index_path, output_directory, metadata_path, target_b
             if first_word_id is None:
                 first_word_id = word_id
 
+            # Handle the edge case where a single WordID's DocIDs exceed the allowed barrel size
+            if doc_count > target_barrel_size + tolerance:
+                # Save the current barrel first if it has data
+                if current_barrel:
+                    barrel_path = os.path.join(output_directory, f"barrel{barrel_id}.json")
+                    with open(barrel_path, 'w') as barrel_file:
+                        json.dump(current_barrel, barrel_file, indent=2)
+
+                    last_word_id = max(current_barrel.keys())
+                    barrel_metadata[f"{first_word_id}-{last_word_id}"] = barrel_path
+
+                    # Reset for the next barrel
+                    current_barrel = {}
+                    current_barrel_doc_count = 0
+                    barrel_id += 1
+                    first_word_id = None
+
+                # Create a separate barrel for this WordID
+                barrel_path = os.path.join(output_directory, f"barrel{barrel_id}.json")
+                with open(barrel_path, 'w') as barrel_file:
+                    json.dump({word_id: doc_ids}, barrel_file, indent=2)
+
+                # Update metadata for the special case barrel
+                barrel_metadata[f"{word_id}-{word_id}"] = barrel_path
+
+                # Increment barrel ID and continue to the next WordID
+                barrel_id += 1
+                continue
+
             # Check if adding this WordID exceeds the flexible range
             if (current_barrel_doc_count + doc_count > target_barrel_size + tolerance or
                 (current_barrel_doc_count > target_barrel_size - tolerance and doc_count > tolerance)):
-
                 # Save the current barrel
                 barrel_path = os.path.join(output_directory, f"barrel{barrel_id}.json")
                 with open(barrel_path, 'w') as barrel_file:
                     json.dump(current_barrel, barrel_file, indent=2)
 
-                # Update metadata
-                first_word_id = min(current_barrel.keys())
                 last_word_id = max(current_barrel.keys())
                 barrel_metadata[f"{first_word_id}-{last_word_id}"] = barrel_path
 
@@ -53,20 +86,19 @@ def createBarrels(inverted_index_path, output_directory, metadata_path, target_b
                 current_barrel = {}
                 current_barrel_doc_count = 0
                 barrel_id += 1
-                first_word_id = word_id
+                first_word_id = word_id  # Reset to the new barrel's first WordID
 
-            # Add WordID and its DocumentIDs to the current barrel
+            # Add WordID and its DocIDs to the current barrel
             current_barrel[word_id] = doc_ids
             current_barrel_doc_count += doc_count
 
         # Save the final barrel
-        if current_barrel:
+        if current_barrel:  # Avoid calling min() or max() on an empty dictionary
             barrel_path = os.path.join(output_directory, f"barrel{barrel_id}.json")
             with open(barrel_path, 'w') as barrel_file:
                 json.dump(current_barrel, barrel_file, indent=2)
 
-                first_word_id = min(current_barrel.keys())
-                last_word_id = max(current_barrel.keys())
+            last_word_id = max(current_barrel.keys())
             barrel_metadata[f"{first_word_id}-{last_word_id}"] = barrel_path
 
         # Save the metadata to a JSON file
