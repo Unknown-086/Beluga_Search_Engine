@@ -1,8 +1,8 @@
 import json
 import os
 import time
-from src.Barrels.BarrelMakerRange import getBarrelForRanged
-from src.Barrels.BarrelMakerHash import getBarrelForHashed
+from src.Barrels.RangeBarrelMaker import getBarrelForRanged
+from src.Barrels.HashBarrelMaker import getBarrelForHashed
 
 
 
