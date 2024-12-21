@@ -12,9 +12,8 @@ def getWordIdFromLexicon(word, lexicon_path):
     """
     try:
         print(f"Loading lexicon from {lexicon_path}...")
-        with open(lexicon_path, 'r') as lexicon_file:
-            lexicon = json.load(lexicon_file)
-
+        with open(lexicon_path, 'r', encoding='utf-8') as lexicon_file:
+                lexicon = json.load(lexicon_file)
         word_id = lexicon.get(word)
         if word_id is not None:
             print(f"Word '{word}' found with WordID: {word_id}")
@@ -26,6 +25,10 @@ def getWordIdFromLexicon(word, lexicon_path):
     except FileNotFoundError:
         print(f"Error: Lexicon file '{lexicon_path}' not found.")
         return None
+    except UnicodeDecodeError:
+        # Fallback to read with error handling
+        with open(lexicon_path, 'r', encoding='utf-8', errors='ignore') as file:
+            return json.load(file)
     except Exception as e:
         print(f"Unexpected error while loading lexicon: {e}")
         return None
