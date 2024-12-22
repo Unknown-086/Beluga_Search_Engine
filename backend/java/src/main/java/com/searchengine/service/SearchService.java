@@ -1,18 +1,116 @@
 package com.searchengine.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.searchengine.model.SearchResult;
 import org.springframework.stereotype.Service;
-import org.json.JSONObject;
-import org.json.JSONTokener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import javax.annotation.PostConstruct;
 import java.io.*;
-import java.nio.file.*;
 import java.util.*;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 
 @Service
 public class SearchService {
-    private static final String BASE_PATH = "../../../../../../../../data/";
-    private static final String LEXICON_PATH = BASE_PATH + "Lexicons/SampleTesting/Lexicon_5000.json";
-    private static final String BARREL_METADATA_PATH = BASE_PATH + "BarrelData/SampleTesting/PathData/barrel_Hashed_metadata_5000.json";
+
+    private static final Logger logger = LoggerFactory.getLogger(SearchService.class);
+    
+    private final String basePath;
+    private final String lexiconPath;
+    private final String barrelMetadataPath;
+
+    public SearchService() {
+        // Get project root directory
+        File projectDir = new File(System.getProperty("user.dir"))
+            .getParentFile()  // java
+            .getParentFile(); // backend
+        
+        this.basePath = new File(projectDir, "data").getAbsolutePath();
+        this.lexiconPath = new File(basePath, "Lexicons/SampleTesting/Lexicon_5000.json").getAbsolutePath();
+        this.barrelMetadataPath = new File(basePath, "BarrelData/SampleTesting/PathData/barrel_Hashed_metadata_5000.json").getAbsolutePath();
+        
+        logger.info("Base path: {}", basePath);
+        logger.info("Lexicon path: {}", lexiconPath);
+        logger.info("Barrel metadata path: {}", barrelMetadataPath);
+        
+        createDirectoriesIfNeeded();
+        verifyPaths();
+    }
+    
+    private void createDirectoriesIfNeeded() {
+        new File(lexiconPath).getParentFile().mkdirs();
+        new File(barrelMetadataPath).getParentFile().mkdirs();
+    }
+
+    private static final Map<String, int[]> DATASET_RANGES = new HashMap<>() {{
+        put("GlobalNewsDataset", new int[]{1000000, 1105351});
+        put("RedditDataset", new int[]{1105352, 1519554});
+        put("WeeklyNewsDataset_Aug17", new int[]{1519555, 1979142});
+        put("WeeklyNewsDataset_Aug18", new int[]{1979143, 2455685});
+    }};
+
+    private void verifyPaths() {
+        if (!new File(lexiconPath).exists()) {
+            throw new RuntimeException("Lexicon file not found: " + lexiconPath);
+        }
+        if (!new File(barrelMetadataPath).exists()) {
+            throw new RuntimeException("Barrel metadata file not found: " + barrelMetadataPath);
+        }
+    }
+
+    private static final Map<String, String> DATASET_PATHS = new HashMap<>();
+    
+    @PostConstruct
+    private void initializePaths() {
+        DATASET_PATHS.put("GlobalNewsDataset", new File(basePath, "SampleDatasets_ForTesting/GlobalNewsDataset_Sample_5000.csv").getAbsolutePath());
+        DATASET_PATHS.put("RedditDataset", new File(basePath, "SampleDatasets_ForTesting/RedditDataset_Sample_5000.csv").getAbsolutePath());
+        DATASET_PATHS.put("WeeklyNewsDataset_Aug17", new File(basePath, "SampleDatasets_ForTesting/WeeklyNewsDataset_Aug17_5000.csv").getAbsolutePath());
+        DATASET_PATHS.put("WeeklyNewsDataset_Aug18", new File(basePath, "SampleDatasets_ForTesting/WeeklyNewsDataset_Aug18_5000.csv").getAbsolutePath());
+    }
+
+
+    private static final Map<String, Map<String, Integer>> DATASET_COLUMNS = new HashMap<>() {{
+        put("GlobalNewsDataset", new HashMap<>() {{
+            put("title", 4);          // title
+            put("description", 5);     // description
+            put("source", 2);         // source_name
+            put("url", 6);           // published_at
+        }});
+        
+        put("RedditDataset", new HashMap<>() {{
+            put("title", 3);          // title
+            put("description", 3);     // subreddit
+            put("source", 2);         // author
+            put("url", 7);           // date
+        }});
+        
+        put("WeeklyNewsDataset_Aug17", new HashMap<>() {{
+            put("title", 4);          // headline_text
+            put("description", 4);     // feed_code
+            put("source", 2);         // feed_code
+            put("url", 3);           // publish_time
+        }});
+        
+        put("WeeklyNewsDataset_Aug18", new HashMap<>() {{
+            put("title", 4);          // headline_text
+            put("description", 4);     // feed_code
+            put("source", 2);         // feed_code
+            put("url", 3);           // publish_time
+        }});
+    }};
+
+    private String resolveBarrelPath(String relativePath) {
+        if (relativePath.startsWith("../")) {
+            // Convert relative path to absolute
+            File projectRoot = new File(System.getProperty("user.dir"))
+                .getParentFile()  // java
+                .getParentFile(); // backend
+            return new File(projectRoot, relativePath.replace("../..", "")).getAbsolutePath();
+        }
+        return relativePath;
+    }
     
     public List<SearchResult> search(String query) {
         int wordId = getLexiconWordId(query.toLowerCase());
@@ -27,65 +125,144 @@ public class SearchService {
 
     private int getLexiconWordId(String word) {
         try {
-            System.out.println("Loading lexicon from " + LEXICON_PATH);
+            logger.info("Loading lexicon from {}", this.lexiconPath);
             ObjectMapper mapper = new ObjectMapper();
-            Map<String, Integer> lexicon = mapper.readValue(new File(LEXICON_PATH), 
+            Map<String, Integer> lexicon = mapper.readValue(new File(this.lexiconPath), 
                 new TypeReference<Map<String, Integer>>() {});
                 
             Integer wordId = lexicon.get(word);
             if (wordId != null) {
-                System.out.println("Word '" + word + "' found with WordID: " + wordId);
+                logger.info("Word '{}' found with WordID: {}", word, wordId);
                 return wordId;
             } else {
-                System.out.println("Word '" + word + "' not found in lexicon.");
+                logger.info("Word '{}' not found in lexicon.", word);
                 return 0;
             }
         } catch (FileNotFoundException e) {
-            System.err.println("Error: Lexicon file '" + LEXICON_PATH + "' not found.");
+            logger.error("Error: Lexicon file '{}' not found.", this.lexiconPath);
             return 0;
         } catch (Exception e) {
-            System.err.println("Unexpected error while loading lexicon: " + e.getMessage());
+            logger.error("Unexpected error while loading lexicon: {}", e.getMessage());
             return 0;
         }
     }
 
     private String getBarrelPath(int wordId) {
-        try (FileReader reader = new FileReader(BARREL_METADATA_PATH)) {
-            JSONObject metadata = new JSONObject(new JSONTokener(reader));
-            return metadata.optString(String.valueOf(wordId), "");
-        } catch (IOException e) {
-            System.err.println("Error reading barrel metadata: " + e.getMessage());
+        try {
+            logger.info("Loading barrel metadata from {}", this.barrelMetadataPath);
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, String> barrelMetadata = mapper.readValue(new File(this.barrelMetadataPath), 
+                new TypeReference<Map<String, String>>() {});
+    
+            // Get number of barrels
+            int numBarrels = barrelMetadata.size();
+            if (numBarrels == 0) {
+                System.out.println("No barrels found in metadata.");
+                return "";
+            }
+    
+            // Calculate barrel index (1-based)
+            int barrelIndex = (wordId % numBarrels) + 1;
+            String barrelKey = String.valueOf(barrelIndex);
+    
+            String barrelPath = barrelMetadata.get(barrelKey);
+            if (barrelPath == null || barrelPath.isEmpty()) {
+                System.out.println("No barrel found for index " + barrelKey);
+                return "";
+            }
+    
+            System.out.println("Found barrel path: " + barrelPath);
+            return barrelPath;
+    
+        } catch (FileNotFoundException e) {
+            System.err.println("Error: Barrel metadata file not found: " + e.getMessage());
+            return "";
+        } catch (Exception e) {
+            System.err.println("Unexpected error accessing barrel metadata: " + e.getMessage());
             return "";
         }
     }
 
+
     private List<Integer> getDocIds(String barrelPath, int wordId) {
-        try (FileReader reader = new FileReader(barrelPath)) {
-            JSONObject barrel = new JSONObject(new JSONTokener(reader));
-            JSONArray docIdsArray = barrel.optJSONArray(String.valueOf(wordId));
-            
-            List<Integer> docIds = new ArrayList<>();
-            if (docIdsArray != null) {
-                for (int i = 0; i < docIdsArray.length(); i++) {
-                    docIds.add(docIdsArray.getInt(i));
-                }
-            }
+        try {
+            String absolutePath = resolveBarrelPath(barrelPath);
+            logger.info("Loading barrel from {}", absolutePath);
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, List<Integer>> barrelData = mapper.readValue(new File(absolutePath),
+                new TypeReference<Map<String, List<Integer>>>() {});
+    
+            List<Integer> docIds = barrelData.getOrDefault(String.valueOf(wordId), new ArrayList<>());
+            logger.info("Found {} document IDs for WordID {}", docIds.size(), wordId);
             return docIds;
-        } catch (IOException e) {
-            System.err.println("Error reading barrel: " + e.getMessage());
+    
+        } catch (Exception e) {
+            logger.error("Error reading barrel: {}", e.getMessage());
             return new ArrayList<>();
         }
     }
+
+    private String identifyDataset(int docId) {
+        for (Map.Entry<String, int[]> entry : DATASET_RANGES.entrySet()) {
+            int[] range = entry.getValue();
+            if (docId >= range[0] && docId <= range[1]) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+private Map<String, String> retrieveContent(int docId) {
+    String datasetName = identifyDataset(docId);
+    if (datasetName == null) {
+        logger.error("DocID {} not found in any dataset range", docId);
+        return null;
+    }
+
+    String datasetPath = DATASET_PATHS.get(datasetName);
+    Map<String, Integer> columnMap = DATASET_COLUMNS.get(datasetName);
+    
+    try (CSVReader reader = new CSVReaderBuilder(new FileReader(datasetPath))
+            .withSkipLines(1)
+            .build()) {
+        String[] line;
+        while ((line = reader.readNext()) != null) {
+            try {
+                if (Integer.parseInt(line[0]) == docId) {
+                    Map<String, String> content = new HashMap<>();
+                    for (Map.Entry<String, Integer> entry : columnMap.entrySet()) {
+                        content.put(entry.getKey(), line[entry.getValue()]);
+                    }
+                    return content;
+                }
+            } catch (NumberFormatException e) {
+                logger.warn("Invalid document ID in CSV: {}", line[0]);
+                continue;
+            }
+        }
+        logger.error("DocID {} not found in dataset {}", docId, datasetName);
+        return null;
+    } catch (Exception e) {
+        logger.error("Error retrieving content for DocID {}: {}", docId, e.getMessage());
+        return null;
+    }
+}
+
 
     private List<SearchResult> getContent(List<Integer> docIds) {
         List<SearchResult> results = new ArrayList<>();
         for (Integer docId : docIds) {
             try {
-                // Read from appropriate dataset based on docId range
-                SearchResult result = new SearchResult();
-                result.setDocId(docId);
-                // Set other fields based on dataset content
-                results.add(result);
+                Map<String, String> content = retrieveContent(docId);
+                if (content != null) {
+                    SearchResult result = new SearchResult();
+                    result.setDocId(docId);
+                    result.setTitle(content.get("title"));
+                    result.setDescription(content.get("description"));
+                    result.setUrl(content.get("url"));
+                    result.setSource(content.get("source"));
+                    results.add(result);
+                }
             } catch (Exception e) {
                 System.err.println("Error retrieving content for DocID " + docId + ": " + e.getMessage());
             }
