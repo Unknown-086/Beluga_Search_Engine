@@ -20,7 +20,7 @@ if __name__ == "__main__":
 #     print(f"Time taken: {end - start:.6f} seconds.")
 
 
-    word = "Afghans"
+    word = "word"
     lexiconPath = os.path.join('../..', 'data', 'Lexicons', 'SampleTesting', 'Lexicon_5000.json')
     hashedMetadataPath = os.path.join('../..', 'data', 'BarrelData', 'SampleTesting', 'PathData', 'barrel_Hashed_metadata_5000.json')
 

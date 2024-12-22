@@ -4,8 +4,15 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from typing import List, Dict
+import os
+import httpx
 
 app = FastAPI()
+
+# Setup paths
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+STATIC_DIR = os.path.join(BASE_DIR, "..", "frontend", "static")
+TEMPLATES_DIR = os.path.join(BASE_DIR, "..", "frontend", "templates")
 
 # CORS and Static Files
 app.add_middleware(
@@ -16,10 +23,11 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-app.mount("/static", StaticFiles(directory="../frontend/static"), name="static")
+# Mount static files with absolute path
+app.mount("/static", StaticFiles(directory=STATIC_DIR, check_dir=True), name="static")
 
-# Templates
-templates = Jinja2Templates(directory="../frontend/templates")
+# Templates with absolute path
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
@@ -27,12 +35,16 @@ async def root(request: Request):
 
 @app.get("/api/search")
 async def search(q: str) -> List[Dict]:
-    # Mock results
+    # Match mock results format
     return [
-        {"title": f"Result for {q}", "description": "Sample description"},
-        {"title": "Another result", "description": "More details here"}
+        {
+            "title": f"Result for {q}",
+            "url": "https://example.com",
+            "description": "Sample description",
+            "source": "Sample Dataset"
+        }
     ]
-    
+
 @app.get("/results", response_class=HTMLResponse)
 async def results(request: Request, q: str):
     # Mock search results
@@ -56,9 +68,16 @@ async def results(request: Request, q: str):
             "source": "News Dataset"
         }
     ]
-    
+
     return templates.TemplateResponse("results.html", {
         "request": request,
         "query": q,
         "results": mock_results
     })
+
+
+@app.get("/api/search")
+async def search(q: str) -> List[Dict]:
+    async with httpx.AsyncClient() as client:
+        response = await client.get(f"http://localhost:8080/api/java/search?query={q}")
+        return response.json()
