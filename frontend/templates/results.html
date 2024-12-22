@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results for "{{ query }}"</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
+</head>
+<body>
+    <div class="theme-toggle" onclick="toggleTheme()">🌓</div>
+    <div class="results-page">
+        <header class="results-header">
+            <div class="header-content">
+                <a href="/" class="logo">Neural Search</a>
+                <form action="/results" method="GET" class="results-search-form">
+                    <div class="search-box compact">
+                        <input type="text" name="q" value="{{ query }}" placeholder="Search again..." required>
+                        <button type="submit">
+                            <span class="search-icon">⌕</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </header>
+        
+        <main class="results-container">
+            <div class="results-info">
+                <p>Found {{ results|length }} results for "{{ query }}"</p>
+            </div>
+            <div class="results-grid">
+                {% for result in results %}
+                <div class="result-card">
+                    <h3><a href="{{ result.url }}" target="_blank">{{ result.title }}</a></h3>
+                    <div class="result-url">{{ result.url }}</div>
+                    <p class="result-description">{{ result.description }}</p>
+                    <div class="result-meta">
+                        <span class="result-source">{{ result.source }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </main>
+    </div>
+    <script src="{{ url_for('static', path='/js/script.js') }}"></script>
+</body>
+</html>

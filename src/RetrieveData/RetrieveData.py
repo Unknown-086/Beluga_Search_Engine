@@ -44,7 +44,7 @@ def retrieveDocIds(word, lexiconPath, hashedMetadataPath):
     print(f"Retrieving WordID for '{word}'...")
     wordId = getWordIdFromLexicon(word, lexiconPath)
     if wordId is None:
-        print(f"Word '{word}' not found in lexicon.")
+        # print(f"Word '{word}' not found in lexicon.")
         return None, []
 
     print(f"Fetching barrel for WordID {wordId}...")

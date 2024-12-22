@@ -1,10 +1,11 @@
 import os
 import time
 from src.RetrieveData.RetrieveData import retrieveDocIds
-from src.RetrieveData.RetrieveDataContent import retrieve_content
+from src.RetrieveData.RetrieveDataContentGPU import retrieve_content, clear_cache
 
 
 if __name__ == "__main__":
+
 #     word = "hadi"
 #     lexiconPath = os.path.join('../..', 'data', 'Lexicons', 'SampleTesting', 'Lexicon_5000.json')
 #     hashedMetadataPath = os.path.join('../..', 'data', 'BarrelData', 'SampleTesting', 'PathData', 'barrel_Hashed_metadata_5000.json')
@@ -19,7 +20,7 @@ if __name__ == "__main__":
 #     print(f"Time taken: {end - start:.6f} seconds.")
 
 
-    word = "hadi"
+    word = "Afghans"
     lexiconPath = os.path.join('../..', 'data', 'Lexicons', 'SampleTesting', 'Lexicon_5000.json')
     hashedMetadataPath = os.path.join('../..', 'data', 'BarrelData', 'SampleTesting', 'PathData', 'barrel_Hashed_metadata_5000.json')
 
@@ -34,7 +35,9 @@ if __name__ == "__main__":
     for docId in DocIDList:
         content.append(retrieve_content(docId))
     end = time.time()
-
+    print(f"Time taken: {end - start:.6f} seconds.")
     for content in content:
         print(f"Content for DocID {docId}: {content}")
-    print(f"Time taken: {end - start:.6f} seconds.")
+
+    # Clear GPU memory cache
+    clear_cache()

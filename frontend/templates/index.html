@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Search</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
+</head>
+<body>
+    <div class="theme-toggle" onclick="toggleTheme()">🌓</div>
+    <main class="home-container">
+        <div class="search-container">
+            <h1 class="animate-title">Neural Search</h1>
+            <form action="/results" method="GET" class="search-form">
+                <div class="search-box">
+                    <input type="text" name="q" placeholder="Enter your search query..." required>
+                    <button type="submit">
+                        <span class="search-icon">⌕</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+    <script src="{{ url_for('static', path='/js/script.js') }}"></script>
+</body>
+</html>
