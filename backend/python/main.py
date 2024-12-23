@@ -8,6 +8,7 @@ import os
 import httpx
 import time
 
+
 app = FastAPI()
 
 # Setup paths
@@ -35,20 +36,7 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 async def root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-# @app.get("/api/search")
-# async def search(q: str) -> List[Dict]:
-#     # Match mock results format
-#     return [
-#         {
-#             "title": f"Result for {q}",
-#             "url": "https://example.com",
-#             "description": "Sample description",
-#             "source": "Sample Dataset"
-#         }
-#     ]
 
-
-import time
 
 
 @app.get("/results", response_class=HTMLResponse)

@@ -1,0 +1,7 @@
+[project]
+name = "search_engine"
+version = "0.1.0"
+description = "Search Engine Project"
+
+[tool.setuptools]
+packages = ["src"]

@@ -1,6 +1,6 @@
 import json
 import os
-from src.Barrels.RangeBarrelMaker import getBarrelForRanged
+# from src.Barrels.RangeBarrelMaker import getBarrelForRanged
 from src.Barrels.HashBarrelMaker import getBarrelForHashed
 
 def getWordIdFromLexicon(word, lexicon_path):

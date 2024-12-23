@@ -212,42 +212,46 @@ public class SearchService {
         return null;
     }
 
-private Map<String, String> retrieveContent(int docId) {
-    String datasetName = identifyDataset(docId);
-    if (datasetName == null) {
-        logger.error("DocID {} not found in any dataset range", docId);
-        return null;
-    }
-
-    String datasetPath = DATASET_PATHS.get(datasetName);
-    Map<String, Integer> columnMap = DATASET_COLUMNS.get(datasetName);
-    
-    try (CSVReader reader = new CSVReaderBuilder(new FileReader(datasetPath))
-            .withSkipLines(1)
-            .build()) {
-        String[] line;
-        while ((line = reader.readNext()) != null) {
-            try {
-                if (Integer.parseInt(line[0]) == docId) {
-                    Map<String, String> content = new HashMap<>();
-                    for (Map.Entry<String, Integer> entry : columnMap.entrySet()) {
-                        content.put(entry.getKey(), line[entry.getValue()]);
-                    }
-                    return content;
-                }
-            } catch (NumberFormatException e) {
-                logger.warn("Invalid document ID in CSV: {}", line[0]);
-                continue;
-            }
+    private Map<String, String> retrieveContent(int docId) {
+        String datasetName = identifyDataset(docId);
+        if (datasetName == null) {
+            logger.error("DocID {} not found in any dataset range", docId);
+            return null;
         }
-        logger.error("DocID {} not found in dataset {}", docId, datasetName);
-        return null;
-    } catch (Exception e) {
-        logger.error("Error retrieving content for DocID {}: {}", docId, e.getMessage());
-        return null;
+    
+        String datasetPath = DATASET_PATHS.get(datasetName);
+        Map<String, Integer> columnMap = DATASET_COLUMNS.get(datasetName);
+        
+        try (FileReader fileReader = new FileReader(datasetPath);
+             CSVReader reader = new CSVReaderBuilder(fileReader)
+                .withSkipLines(1)
+                .build()) {
+                
+            String[] line;
+            while ((line = reader.readNext()) != null) {
+                try {
+                    String docIdStr = line[0].trim();
+                    if (!docIdStr.isEmpty() && Integer.parseInt(docIdStr) == docId) {
+                        Map<String, String> content = new HashMap<>();
+                        for (Map.Entry<String, Integer> entry : columnMap.entrySet()) {
+                            int colIndex = entry.getValue();
+                            if (colIndex < line.length) {
+                                content.put(entry.getKey(), line[colIndex]);
+                            }
+                        }
+                        return content;
+                    }
+                } catch (NumberFormatException e) {
+                    logger.debug("Skipping invalid line for docId: {}", docId);
+                    continue;
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            logger.error("Error retrieving content for DocID {}: {}", docId, e.getMessage());
+            return null;
+        }
     }
-}
-
 
     private List<SearchResult> getContent(List<Integer> docIds) {
         List<SearchResult> results = new ArrayList<>();

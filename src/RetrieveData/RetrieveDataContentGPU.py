@@ -2,6 +2,8 @@ import os
 import pandas as pd
 from numba import jit, cuda
 import numpy as np
+# from src.RetrieveData.SearchResult import SearchResult
+from SearchResult import SearchResult
 
 DATASET_RANGES = {
     "GlobalNewsDataset": (1000000, 1105351),
@@ -18,6 +20,33 @@ DATASET_PATHS = {
     "WeeklyNewsDataset_Aug18": os.path.join('../..', 'data', 'SampleDatasets_ForTesting', 'WeeklyNewsDataset_Aug18_5000.csv')
 }
 
+DATASET_COLUMNS = {
+    "GlobalNewsDataset": {
+        "title": "title",
+        "description": "description",
+        "source": "source_name",
+        "url": "url"
+    },
+    "RedditDataset": {
+        "title": "title",
+        "description": "title",
+        "source": "subreddit",
+        "url": "full_link"
+    },
+    "WeeklyNewsDataset_Aug17": {
+        "title": "headline_text",
+        "description": "headline_text",
+        "source": "feed_code",
+        "url": "source_url"
+    },
+    "WeeklyNewsDataset_Aug18": {
+        "title": "headline_text",
+        "description": "headline_text",
+        "source": "feed_code",
+        "url": "source_url"
+    }
+}
+
 def identify_dataset(doc_id):
     for dataset, (start_id, end_id) in DATASET_RANGES.items():
         if start_id <= doc_id <= end_id:
@@ -26,6 +55,16 @@ def identify_dataset(doc_id):
 
 # Cache for loaded datasets
 DATASET_CACHE = {}
+
+
+@cuda.jit
+def process_doc_ids(doc_ids, results, dataset_array):
+    """GPU kernel for parallel document processing"""
+    idx = cuda.grid(1)
+    if idx < doc_ids.size:
+        doc_id = doc_ids[idx]
+        if 0 <= doc_id < dataset_array.shape[0]:
+            results[idx] = 1
 
 
 @jit(nopython=True)
@@ -50,6 +89,8 @@ def load_dataset(dataset_path):
         return None
 
 
+
+
 def retrieve_content(doc_id):
     dataset_name = identify_dataset(doc_id)
     if not dataset_name:
@@ -62,7 +103,7 @@ def retrieve_content(doc_id):
         if dataset is None:
             return None
 
-        # Convert DocIDs to numpy array for GPU acceleration
+        # GPU accelerated search
         doc_ids = dataset['DocID'].values
         idx = search_doc_id(doc_ids, doc_id)
 
@@ -70,11 +111,40 @@ def retrieve_content(doc_id):
             print(f"Error: DocID {doc_id} not found in dataset {dataset_name}.")
             return None
 
-        return dataset.iloc[idx].to_dict()
+        row = dataset.iloc[idx]
+        column_map = DATASET_COLUMNS[dataset_name]
+
+        return {col: row[col_name] for col, col_name in column_map.items()}
 
     except Exception as e:
         print(f"Error retrieving content for DocID {doc_id}: {e}")
         return None
+
+
+def get_content(doc_ids):
+    results = []
+    for doc_id in doc_ids:
+        try:
+            content = retrieve_content(doc_id)
+            if content:
+                result = SearchResult()
+                result.doc_id = doc_id
+
+                dataset_name = identify_dataset(doc_id)
+                column_map = DATASET_COLUMNS[dataset_name]
+
+                result.title = content.get(column_map["title"])
+                result.description = content.get(column_map["description"])
+                result.source = content.get(column_map["source"])
+                result.url = content.get(column_map["url"])
+
+                results.append(result.to_dict())
+
+        except Exception as e:
+            print(f"Error retrieving content for DocID {doc_id}: {e}")
+            continue
+
+    return results
 
 
 def clear_cache():

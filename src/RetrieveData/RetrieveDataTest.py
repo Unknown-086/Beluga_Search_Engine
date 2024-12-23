@@ -1,12 +1,18 @@
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent.parent))
+
 import os
 import time
-from src.RetrieveData.RetrieveData import retrieveDocIds
-from src.RetrieveData.RetrieveDataContentGPU import retrieve_content, clear_cache
+# from src.RetrieveData.RetrieveData import retrieveDocIds
+# from src.RetrieveData.RetrieveDataContentGPU import get_content, clear_cache
+from RetrieveData import retrieveDocIds
+from RetrieveDataContentGPU import get_content, clear_cache
 
 
 if __name__ == "__main__":
 
-#     word = "hadi"
+#     word = "fast"
 #     lexiconPath = os.path.join('../..', 'data', 'Lexicons', 'SampleTesting', 'Lexicon_5000.json')
 #     hashedMetadataPath = os.path.join('../..', 'data', 'BarrelData', 'SampleTesting', 'PathData', 'barrel_Hashed_metadata_5000.json')
 #     # rangedMetadataPath = os.path.join('../..', 'data', 'BarrelData', 'Testing', 'PathData', 'Barrels_GlobalNews_English2_Metadata.json')
@@ -32,11 +38,12 @@ if __name__ == "__main__":
 
     # Retrieve and display content for each DocID
     content = []
-    for docId in DocIDList:
-        content.append(retrieve_content(docId))
+
+    content = get_content(DocIDList)
+
     end = time.time()
     for content in content:
-        print(f"Content for DocID {docId}: {content}")
+        print(f"Content for DocID {content.get('docId')}: {content}")
 
     print(f"Time taken: {end - start:.6f} seconds.")
     # Clear GPU memory cache
