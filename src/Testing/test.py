@@ -1,29 +1,15 @@
-import numpy as np
+import sys
+from pathlib import Path
 import pandas as pd
-from numba import jit
-import fastapi
-import uvicorn
-import httpx
+import numpy as np
+from numba import cuda
 
-
-def test_setup():
-    # Test numpy
-    arr = np.array([1, 2, 3])
-    print(f"NumPy: {arr.mean()}")
-
-    # Test pandas
-    df = pd.DataFrame({'test': [1, 2, 3]})
-    print(f"Pandas: {df.head()}")
-
-    # Test numba
-    @jit(nopython=True)
-    def add(a, b):
-        return a + b
-
-    print(f"Numba: {add(1, 2)}")
-
-    print("All imports successful!")
-
+def test_imports():
+    print("Python path:", sys.path)
+    print("NumPy version:", np.__version__)
+    print("Pandas version:", pd.__version__)
+    print("Current directory:", Path.cwd())
+    print("Project root:", Path(__file__).parent.parent.parent)
 
 if __name__ == "__main__":
-    test_setup()
+    test_imports()

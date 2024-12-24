@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent.parent))
+
 import os
 import time
 import orjson
@@ -8,20 +12,23 @@ from src.ForwardIndex.ForwardIndexBuilder import buildForwardIndex, saveForwardI
 if __name__ == "__main__":
     # File paths and configuration
     datasetPaths = [
-        os.path.join('../..', 'data', 'SampleDatasets_ForTesting', 'GlobalNewsDataset_Sample_5000.csv'),
-        os.path.join('../..', 'data', 'SampleDatasets_ForTesting', 'RedditDataset_Sample_5000.csv'),
-        os.path.join('../..', 'data', 'SampleDatasets_ForTesting', 'WeeklyNewsDataset_Aug17_5000.csv'),
-        os.path.join('../..', 'data', 'SampleDatasets_ForTesting', 'WeeklyNewsDataset_Aug18_5000.csv')
+        # os.path.join('../..', 'data', 'Testing', 'ModifiedGlobalNewsDataset13_Language_English_Langauge.csv')
+        os.path.join('../..', 'data', 'FilteredDatasets', 'ModifiedGlobalNewsDataset13_Language_English_Langauge.csv'),
+        os.path.join('../..', 'data', 'FilteredDatasets', 'ModifiedReddit_database11_English.csv'),
+        os.path.join('../..', 'data', 'FilteredDatasets', 'ModifiedNews-week-17aug8_English.csv'),
+        os.path.join('../..', 'data', 'FilteredDatasets', 'ModifiedNews-week-18aug7_English.csv')
     ]
 
     columnLists = [
-        [ 'published_at', 'source_name', 'author', 'title', 'description', 'content', 'category', 'full_content' ],
-        [ 'date', 'subreddit', 'title', 'author' ],
-        [ 'publish_time', 'feed_code', 'headline_text'] ,
-        [ 'publish_time', 'feed_code', 'headline_text' ]
+        [ 'published_at', 'source_name', 'author', 'title', 'description', 'url', 'url_to_image', 'content', 'category', 'full_content' ],
+        [ 'created_date', 'subreddit', 'title', 'author', 'full_link', 'post'],
+        [ 'publish_time', 'feed_code', 'source_url', 'headline_text'] ,
+        [ 'publish_time', 'feed_code', 'source_url', 'headline_text' ]
     ]
-    lexiconFilePath = os.path.join('../..', 'data', 'Lexicons', 'SampleTesting', 'Lexicon_5000.json')
-    outputFilePath = os.path.join('../..', 'data', 'ForwardIndexData', 'SampleTesting', 'ForwardIndex_5000.json')
+
+
+    lexiconFilePath = os.path.join('../..', 'data', 'Lexicons', 'Testing', 'Lexicon_Testing.json')
+    outputFilePath = os.path.join('../..', 'data', 'ForwardIndexData', 'Testing', 'ForwardIndex_Testing.json')
 
     start = time.time()
     print("Loading lexicon...")

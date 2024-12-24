@@ -44,7 +44,7 @@ async def results(request: Request, q: str):
     start_time = time.time()
 
     try:
-        async with httpx.AsyncClient(timeout=300.0) as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             # Time Java request
             java_start = time.time()
             response = await client.get(f"http://localhost:8080/api/java/search?query={q}")

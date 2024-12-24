@@ -1,4 +1,7 @@
+com\searchengine\service\GPUContentRetriever$2.class
 com\searchengine\service\SearchService$2$3.class
+com\searchengine\service\GPUContentRetriever$3.class
+com\searchengine\service\GPUContentRetriever$4.class
 com\searchengine\service\SearchService$1.class
 com\searchengine\controller\SearchController.class
 com\searchengine\service\SearchService$2$4.class
@@ -6,9 +9,12 @@ com\searchengine\SearchApplication.class
 com\searchengine\service\SearchService$5.class
 com\searchengine\service\SearchService$3.class
 com\searchengine\model\SearchResult.class
+com\searchengine\service\GPUContentRetriever$5.class
 com\searchengine\service\SearchService$2.class
 com\searchengine\service\SearchService$4.class
 com\searchengine\service\SearchService.class
+com\searchengine\service\GPUContentRetriever$1.class
+com\searchengine\service\GPUContentRetriever.class
 com\searchengine\service\SearchService$2$2.class
 com\searchengine\config\SearchConfig.class
 com\searchengine\service\SearchService$2$1.class

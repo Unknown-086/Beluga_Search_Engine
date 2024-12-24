@@ -4,10 +4,8 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 import os
 import time
-# from src.RetrieveData.RetrieveData import retrieveDocIds
-# from src.RetrieveData.RetrieveDataContentGPU import get_content, clear_cache
-from RetrieveData import retrieveDocIds
-from RetrieveDataContentGPU import get_content, clear_cache
+from src.RetrieveData.RetrieveData import retrieveDocIds
+from src.RetrieveData.RetrieveDataContentGPU import get_content, clear_cache
 
 
 if __name__ == "__main__":

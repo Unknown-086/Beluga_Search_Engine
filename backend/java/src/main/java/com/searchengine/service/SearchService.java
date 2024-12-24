@@ -3,6 +3,7 @@ package com.searchengine.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.searchengine.model.SearchResult;
+import com.searchengine.service.GPUContentRetriever;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,28 +13,25 @@ import java.util.*;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 
+
 @Service
 public class SearchService {
-
     private static final Logger logger = LoggerFactory.getLogger(SearchService.class);
-    
+    private final GPUContentRetriever gpuContentRetriever;
     private final String basePath;
     private final String lexiconPath;
     private final String barrelMetadataPath;
 
-    public SearchService() {
-        // Get project root directory
+    public SearchService(GPUContentRetriever gpuContentRetriever) {
+        this.gpuContentRetriever = gpuContentRetriever;
+        
         File projectDir = new File(System.getProperty("user.dir"))
-            .getParentFile()  // java
-            .getParentFile(); // backend
+            .getParentFile()
+            .getParentFile();
         
         this.basePath = new File(projectDir, "data").getAbsolutePath();
-        this.lexiconPath = new File(basePath, "Lexicons/SampleTesting/Lexicon_5000.json").getAbsolutePath();
-        this.barrelMetadataPath = new File(basePath, "BarrelData/SampleTesting/PathData/barrel_Hashed_metadata_5000.json").getAbsolutePath();
-        
-        logger.info("Base path: {}", basePath);
-        logger.info("Lexicon path: {}", lexiconPath);
-        logger.info("Barrel metadata path: {}", barrelMetadataPath);
+        this.lexiconPath = new File(basePath, "Lexicons/Testing/Lexicon_Testing.json").getAbsolutePath();
+        this.barrelMetadataPath = new File(basePath, "BarrelData/Testing/PathData/Barrels_Testing_Metadata.json").getAbsolutePath();
         
         createDirectoriesIfNeeded();
         verifyPaths();
@@ -64,40 +62,40 @@ public class SearchService {
     
     @PostConstruct
     private void initializePaths() {
-        DATASET_PATHS.put("GlobalNewsDataset", new File(basePath, "SampleDatasets_ForTesting/GlobalNewsDataset_Sample_5000.csv").getAbsolutePath());
-        DATASET_PATHS.put("RedditDataset", new File(basePath, "SampleDatasets_ForTesting/RedditDataset_Sample_5000.csv").getAbsolutePath());
-        DATASET_PATHS.put("WeeklyNewsDataset_Aug17", new File(basePath, "SampleDatasets_ForTesting/WeeklyNewsDataset_Aug17_5000.csv").getAbsolutePath());
-        DATASET_PATHS.put("WeeklyNewsDataset_Aug18", new File(basePath, "SampleDatasets_ForTesting/WeeklyNewsDataset_Aug18_5000.csv").getAbsolutePath());
+        DATASET_PATHS.put("GlobalNewsDataset", new File(basePath, "Testing/GlobalNewsDataset_Testing.csv").getAbsolutePath());
+        DATASET_PATHS.put("RedditDataset", new File(basePath, "Testing/RedditDatabase_Testing.csv").getAbsolutePath());
+        DATASET_PATHS.put("WeeklyNewsDataset_Aug17", new File(basePath, "Testing/WeeklyNewsDataset_Aug17_Testing.csv").getAbsolutePath());
+        DATASET_PATHS.put("WeeklyNewsDataset_Aug18", new File(basePath, "Testing/WeeklyNewsDataset_Aug18_Testing.csv").getAbsolutePath());
     }
 
 
     private static final Map<String, Map<String, Integer>> DATASET_COLUMNS = new HashMap<>() {{
         put("GlobalNewsDataset", new HashMap<>() {{
-            put("title", 4);          // title
-            put("description", 5);     // description
-            put("source", 2);         // source_name
-            put("url", 6);           // published_at
+            put("title", 4);          // title         
+            put("description", 5);     // description 
+            put("source", 2);         // source_name  
+            put("url", 6);           // url           
         }});
         
         put("RedditDataset", new HashMap<>() {{
             put("title", 3);          // title
-            put("description", 3);     // subreddit
-            put("source", 2);         // author
-            put("url", 7);           // date
+            put("description", 3);     // title
+            put("source", 2);         // subreddit
+            put("url", 7);           // url
         }});
         
         put("WeeklyNewsDataset_Aug17", new HashMap<>() {{
             put("title", 4);          // headline_text
-            put("description", 4);     // feed_code
+            put("description", 4);     // headline_text
             put("source", 2);         // feed_code
-            put("url", 3);           // publish_time
+            put("url", 3);           // source_url
         }});
         
         put("WeeklyNewsDataset_Aug18", new HashMap<>() {{
             put("title", 4);          // headline_text
-            put("description", 4);     // feed_code
+            put("description", 4);     // headline_text
             put("source", 2);         // feed_code
-            put("url", 3);           // publish_time
+            put("url", 3);           // source_url
         }});
     }};
 
@@ -111,7 +109,7 @@ public class SearchService {
         }
         return relativePath;
     }
-    
+
     public List<SearchResult> search(String query) {
         int wordId = getLexiconWordId(query.toLowerCase());
         if (wordId == 0) return new ArrayList<>();
@@ -120,7 +118,7 @@ public class SearchService {
         if (barrelPath.isEmpty()) return new ArrayList<>();
         
         List<Integer> docIds = getDocIds(barrelPath, wordId);
-        return getContent(docIds);
+        return gpuContentRetriever.getContentGPU(docIds);
     }
 
     private int getLexiconWordId(String word) {
@@ -187,7 +185,7 @@ public class SearchService {
     private List<Integer> getDocIds(String barrelPath, int wordId) {
         try {
             String absolutePath = resolveBarrelPath(barrelPath);
-            logger.info("Loading barrel from {}", absolutePath);
+            // logger.info("Loading barrel from {}", absolutePath);
             ObjectMapper mapper = new ObjectMapper();
             Map<String, List<Integer>> barrelData = mapper.readValue(new File(absolutePath),
                 new TypeReference<Map<String, List<Integer>>>() {});
@@ -202,75 +200,75 @@ public class SearchService {
         }
     }
 
-    private String identifyDataset(int docId) {
-        for (Map.Entry<String, int[]> entry : DATASET_RANGES.entrySet()) {
-            int[] range = entry.getValue();
-            if (docId >= range[0] && docId <= range[1]) {
-                return entry.getKey();
-            }
-        }
-        return null;
-    }
+    // private String identifyDataset(int docId) {
+    //     for (Map.Entry<String, int[]> entry : DATASET_RANGES.entrySet()) {
+    //         int[] range = entry.getValue();
+    //         if (docId >= range[0] && docId <= range[1]) {
+    //             return entry.getKey();
+    //         }
+    //     }
+    //     return null;
+    // }
 
-    private Map<String, String> retrieveContent(int docId) {
-        String datasetName = identifyDataset(docId);
-        if (datasetName == null) {
-            logger.error("DocID {} not found in any dataset range", docId);
-            return null;
-        }
+    // private Map<String, String> retrieveContent(int docId) {
+    //     String datasetName = identifyDataset(docId);
+    //     if (datasetName == null) {
+    //         logger.error("DocID {} not found in any dataset range", docId);
+    //         return null;
+    //     }
     
-        String datasetPath = DATASET_PATHS.get(datasetName);
-        Map<String, Integer> columnMap = DATASET_COLUMNS.get(datasetName);
+    //     String datasetPath = DATASET_PATHS.get(datasetName);
+    //     Map<String, Integer> columnMap = DATASET_COLUMNS.get(datasetName);
         
-        try (FileReader fileReader = new FileReader(datasetPath);
-             CSVReader reader = new CSVReaderBuilder(fileReader)
-                .withSkipLines(1)
-                .build()) {
+    //     try (FileReader fileReader = new FileReader(datasetPath);
+    //          CSVReader reader = new CSVReaderBuilder(fileReader)
+    //             .withSkipLines(1)
+    //             .build()) {
                 
-            String[] line;
-            while ((line = reader.readNext()) != null) {
-                try {
-                    String docIdStr = line[0].trim();
-                    if (!docIdStr.isEmpty() && Integer.parseInt(docIdStr) == docId) {
-                        Map<String, String> content = new HashMap<>();
-                        for (Map.Entry<String, Integer> entry : columnMap.entrySet()) {
-                            int colIndex = entry.getValue();
-                            if (colIndex < line.length) {
-                                content.put(entry.getKey(), line[colIndex]);
-                            }
-                        }
-                        return content;
-                    }
-                } catch (NumberFormatException e) {
-                    logger.debug("Skipping invalid line for docId: {}", docId);
-                    continue;
-                }
-            }
-            return null;
-        } catch (Exception e) {
-            logger.error("Error retrieving content for DocID {}: {}", docId, e.getMessage());
-            return null;
-        }
-    }
+    //         String[] line;
+    //         while ((line = reader.readNext()) != null) {
+    //             try {
+    //                 String docIdStr = line[0].trim();
+    //                 if (!docIdStr.isEmpty() && Integer.parseInt(docIdStr) == docId) {
+    //                     Map<String, String> content = new HashMap<>();
+    //                     for (Map.Entry<String, Integer> entry : columnMap.entrySet()) {
+    //                         int colIndex = entry.getValue();
+    //                         if (colIndex < line.length) {
+    //                             content.put(entry.getKey(), line[colIndex]);
+    //                         }
+    //                     }
+    //                     return content;
+    //                 }
+    //             } catch (NumberFormatException e) {
+    //                 logger.debug("Skipping invalid line for docId: {}", docId);
+    //                 continue;
+    //             }
+    //         }
+    //         return null;
+    //     } catch (Exception e) {
+    //         logger.error("Error retrieving content for DocID {}: {}", docId, e.getMessage());
+    //         return null;
+    //     }
+    // }
 
-    private List<SearchResult> getContent(List<Integer> docIds) {
-        List<SearchResult> results = new ArrayList<>();
-        for (Integer docId : docIds) {
-            try {
-                Map<String, String> content = retrieveContent(docId);
-                if (content != null) {
-                    SearchResult result = new SearchResult();
-                    result.setDocId(docId);
-                    result.setTitle(content.get("title"));
-                    result.setDescription(content.get("description"));
-                    result.setUrl(content.get("url"));
-                    result.setSource(content.get("source"));
-                    results.add(result);
-                }
-            } catch (Exception e) {
-                System.err.println("Error retrieving content for DocID " + docId + ": " + e.getMessage());
-            }
-        }
-        return results;
-    }
+    // private List<SearchResult> getContent(List<Integer> docIds) {
+    //     List<SearchResult> results = new ArrayList<>();
+    //     for (Integer docId : docIds) {
+    //         try {
+    //             Map<String, String> content = retrieveContent(docId);
+    //             if (content != null) {
+    //                 SearchResult result = new SearchResult();
+    //                 result.setDocId(docId);
+    //                 result.setTitle(content.get("title"));
+    //                 result.setDescription(content.get("description"));
+    //                 result.setUrl(content.get("url"));
+    //                 result.setSource(content.get("source"));
+    //                 results.add(result);
+    //             }
+    //         } catch (Exception e) {
+    //             System.err.println("Error retrieving content for DocID " + docId + ": " + e.getMessage());
+    //         }
+    //     }
+    //     return results;
+    // }
 }

@@ -15010,7 +15010,7 @@ You can imagine you are playing with Stripes and Solids or Reds and Yellows, wha
 1109272,2012-03-15 15:11:54,MachineLearning,Bayesian statistics tutorial: video from PyCon 2012,qxpzt,AllenDowney,1300587223.0,https://www.reddit.com/r/MachineLearning/comments/qxpzt/bayesian_statistics_tutorial_video_from_pycon_2012/,24.0,0.0,,en
 1109273,2012-03-15 16:20:27,statistics,"Why does centering (e.g., mean centering) a variable produce less multicollinearity than not centering?",qxsgf,[deleted],,https://www.reddit.com/r/statistics/comments/qxsgf/why_does_centering_eg_mean_centering_a_variable/,1.0,5.0,"I'm learning about regression right now and have learned that centering predictors reduce the multicollinearity associated with higher order terms.
 
-My professor told us that it's because with an uncentered variable, say, X, there is a high correlation with X^2. However, with a centered variable, say, CX, there is a low correlation between CX and CX^2. 
+My professor told us that it's because with an uncentered variable, say, X, there is a high correlation with X^2. However, with a centered variable, say, CX, there is a low correlation between CX and CX^2.
 
 I don't understand how centering the variables would lead to a reduction in correlation between the two variables. Can someone dumb this down and explain it to me? 
 

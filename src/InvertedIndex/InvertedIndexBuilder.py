@@ -31,8 +31,6 @@ def buildInvertedIndex(forward_index_path, output_file_path):
         with open(output_file_path, 'w') as output_file:  # Use 'w' for writing text files
             json.dump(sorted_inverted_index, output_file, indent=2)  # Use json.dump instead of orjson.dumps
 
-        print("Inverted index built and saved successfully.")
-
     except FileNotFoundError:
         print(f"Error: Forward index file '{forward_index_path}' not found.")
     except Exception as e:

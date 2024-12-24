@@ -21,11 +21,19 @@ file_paths = [
                 # os.path.join('..', 'data', 'FilteredDatasets', 'FilteredNews-week-17aug5_English_6.csv'),
                 # os.path.join('..', 'data', 'FilteredDatasets', 'FilteredNews-week-17aug5_Non_English_6.csv')
 
-
-                os.path.join('../../..', 'data', 'FilteredDatasets', 'ModifiedGlobalNewsDataset13_Language_English_Langauge.csv'),
-
-                # os.path.join('../..', 'data', 'ModifiedDatasets', 'ModifiedReddit_database8.csv'),
                 #
+                # os.path.join('../../..', 'data', 'FilteredDatasets', 'ModifiedGlobalNewsDataset13_Language_English_Langauge.csv'),
+                # os.path.join('../../..', 'data', 'FilteredDatasets', 'ModifiedReddit_database11_English.csv'),
+                os.path.join('../../..', 'data', 'FilteredDatasets', 'ModifiedGlobalNewsDataset13_Language_English_Langauge.csv'),
+                # os.path.join('../../..', 'data', 'FilteredDatasets', 'ModifiedNews-week-18aug7_Non_English.csv')
+
+                # os.path.join('../../..', 'data', 'ModifiedDatasets', 'ModifiedNews-week-18aug7.csv'),
+                # os.path.join('../../..', 'data', 'ModifiedDatasets', 'ModifiedReddit_database100.csv'),
+                # os.path.join('../../..', 'data', 'ModifiedDatasets', 'ModifiedNews-week-17aug100.csv'),
+                # os.path.join('../../..', 'data', 'ModifiedDatasets', 'ModifiedNews-week-18aug100.csv')
+
+                # os.path.join('../../..', 'data', 'FilteredDatasets', 'ModifiedNews-week-18aug7_Non_English.csv')
+
                 # os.path.join('../..', 'data', 'ModifiedDatasets', 'ModifiedNews-week-17aug6.csv'),
                 #
                 # os.path.join('../..', 'data', 'ModifiedDatasets', 'ModifiedNews-week-18aug5.csv')
@@ -41,7 +49,7 @@ number = 0
 for file in file_paths:
     df = pd.read_csv(file)
     # df = df[df[column_name].isnull()]
-    df = df[df[column_name] != value]
+    # df = df[df[column_name] != value]
 
 
     # Get the total number of rows
