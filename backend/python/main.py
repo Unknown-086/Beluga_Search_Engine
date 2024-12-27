@@ -7,7 +7,7 @@ from typing import List, Dict
 import os
 import httpx
 import time
-
+from math import ceil
 
 app = FastAPI()
 
@@ -37,21 +37,21 @@ async def root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
-
-
 @app.get("/results", response_class=HTMLResponse)
-async def results(request: Request, q: str):
+async def results(request: Request, q: str, page: int = 1):
     start_time = time.time()
 
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             # Time Java request
             java_start = time.time()
-            response = await client.get(f"http://localhost:8080/api/java/search?query={q}")
+            response = await client.get(
+                f"http://localhost:8080/api/java/search?query={q}&page={page}"
+            )
             java_time = time.time() - java_start
             print(f"\nQuery: '{q}'")
             print(f"Java service request time: {java_time:.3f} seconds")
-
+            
             if response.status_code != 200:
                 return templates.TemplateResponse("error.html", {
                     "request": request,
@@ -60,16 +60,19 @@ async def results(request: Request, q: str):
 
             # Time response processing
             process_start = time.time()
-            search_results = response.json()
+            data = response.json()
             process_time = time.time() - process_start
             print(f"Response processing time: {process_time:.3f} seconds")
-
-            # Generate template response
+            
+            # Time template generation
             template_start = time.time()
             response = templates.TemplateResponse("results.html", {
                 "request": request,
                 "query": q,
-                "results": search_results
+                "results": data.get("results", []),
+                "total_results": data.get("totalResults", 0),
+                "current_page": data.get("currentPage", page),
+                "total_pages": data.get("totalPages", 1)
             })
             template_time = time.time() - template_start
             print(f"Template rendering time: {template_time:.3f} seconds")
@@ -79,15 +82,11 @@ async def results(request: Request, q: str):
 
             return response
 
-    except httpx.ReadTimeout:
-        return templates.TemplateResponse("error.html", {
-            "request": request,
-            "error": "Search timed out. Please try again."
-        })
     except Exception as e:
+        print(f"Error processing request: {e}")  # Debug print
         return templates.TemplateResponse("error.html", {
             "request": request,
-            "error": f"Search service unavailable: {str(e)}"
+            "error": f"Error processing request: {str(e)}"
         })
 
 

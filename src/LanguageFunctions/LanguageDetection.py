@@ -64,7 +64,7 @@ def detect_language(text):
         return "unknown"  # Handle cases where detection fails
 
         #  "ଗ୍ୟାସ୍-ଏସିଡିଟି ପାଇଁ ରାମବାଣ ପରି କାମ କରିବ ଏହି ୪ ଆସନ"
-raw_text = "Aロンドン, 2023年10月27日 /PRNewswire/ -- Zambia External Bondholder Steering Committee（ザンビア外債保有者運営委員会、以下「委員会」）は、ザンビアの（1）7億5000万米ドル、金利5.375%、2022年満期債券（2）10億米ドル、金利8.500%、2024年満期債券（3）12億5000万米ドル、金利8.970%、2027年償還債（総称して..."
+raw_text = "musab"
 
 start = time.time()
 # Detect the language with probabilities

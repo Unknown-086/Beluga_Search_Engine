@@ -24,10 +24,11 @@ public class GPUContentRetriever {
     private static final Map<String, List<String[]>> DATASET_CACHE = new ConcurrentHashMap<>();
     private static final Map<String, Map<String, Integer>> DATASET_COLUMNS = new ConcurrentHashMap<>();
     private static final Map<String, String> DATASET_PATHS = new ConcurrentHashMap<>();
-    private static final int BATCH_SIZE = 1000;
+    private static final int BATCH_SIZE = 10000;
     private static final int THREAD_POOL_SIZE = Runtime.getRuntime().availableProcessors();
     private final Map<String, Map<Integer, String[]>> indexedDatasets = new ConcurrentHashMap<>();
     private final ExecutorService executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+    private static final int PAGE_SIZE = 100;
 
     @PostConstruct
     public void initialize() {
@@ -320,26 +321,39 @@ public class GPUContentRetriever {
     // }
 
     
-    private boolean isValidDocId(String docId) {
-        try {
-            return docId.matches("^\\d{7}$");
-        } catch (Exception e) {
-            return false;
-        }
-    }
+    // private boolean isValidDocId(String docId) {
+    //     try {
+    //         return docId.matches("^\\d{7}$");
+    //     } catch (Exception e) {
+    //         return false;
+    //     }
+    // }
 
-    public List<SearchResult> getContentGPU(List<Integer> docIds) {
+    public List<SearchResult> getContentGPU(List<Integer> docIds, int page) {
         if (docIds == null || docIds.isEmpty()) {
             return Collections.emptyList();
         }
-        // Process in batches using parallel streams
-        return docIds.parallelStream()
+
+        // Calculate pagination bounds
+        int startIndex = (page - 1) * PAGE_SIZE;
+        int endIndex = Math.min(startIndex + PAGE_SIZE, docIds.size());
+        
+        // Get subset of docIds for current page
+        List<Integer> pageDocIds = docIds.subList(startIndex, endIndex);
+
+        // Process page batch
+        return pageDocIds.parallelStream()
             .collect(Collectors.groupingBy(id -> id / BATCH_SIZE))
             .values()
             .parallelStream()
             .map(batch -> processBatch(batch))
             .flatMap(Collection::stream)
             .collect(Collectors.toList());
+    }
+
+    // Add method to get total results count
+    public int getTotalResults(List<Integer> docIds) {
+        return docIds != null ? docIds.size() : 0;
     }
 
     private List<SearchResult> processBatch(List<Integer> batch) {

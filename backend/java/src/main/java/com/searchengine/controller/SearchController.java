@@ -5,6 +5,7 @@ import com.searchengine.model.SearchResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/java")
@@ -16,7 +17,9 @@ public class SearchController {
     }
 
     @GetMapping("/search")
-    public List<SearchResult> search(@RequestParam String query) {
-        return searchService.search(query);
+    public Map<String, Object> search(
+            @RequestParam String query,
+            @RequestParam(defaultValue = "1") int page) {
+        return searchService.search(query, page);
     }
 }

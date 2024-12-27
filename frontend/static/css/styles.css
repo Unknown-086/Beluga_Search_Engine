@@ -155,10 +155,16 @@ body {
     padding: 0 2rem;
 }
 
+/* Results info and pagination spacing */
 .results-info {
+    margin: 2rem 0 3rem 0;
+    padding: 1rem;
+    background: var(--surface-color);
+    border-radius: 8px;
+    text-align: center;
+    font-size: 1.1rem;
     color: var(--text-color);
-    margin-bottom: 1.5rem;
-    font-size: 0.9rem;
+    box-shadow: 0 2px 8px var(--shadow-color);
 }
 
 .result-card {
@@ -209,6 +215,105 @@ body {
     font-weight: 500;
 }
 
+/* Pagination Controls */
+.pagination-controls {
+    margin: 3rem 0;
+    padding: 1.5rem;
+    background: var(--surface-color);
+    border-radius: 12px;
+    box-shadow: 0 2px 12px var(--shadow-color);
+}
+
+.page-button {
+    min-width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--accent-color);
+    border-radius: 8px;
+    color: var(--accent-color);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    padding: 0 12px;
+    background: var(--bg-color);
+    font-size: 0.95rem;
+}
+
+.page-button:hover {
+    background: var(--accent-color);
+    color: var(--bg-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.page-button.active {
+    background: var(--accent-color);
+    color: var(--bg-color);
+    font-weight: bold;
+    border-width: 2px;
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+
+.page-ellipsis {
+    color: var(--text-color);
+    padding: 0 8px;
+    user-select: none;
+    font-weight: bold;
+}
+
+/* Top pagination spacing */
+.pagination-controls:first-of-type {
+    margin-bottom: 4rem;
+}
+
+/* Bottom pagination spacing */
+.pagination-controls:last-of-type {
+    margin-top: 4rem;
+}
+
+
+
+/* Previous/Next buttons */
+.page-button:first-child,
+.page-button:last-child {
+    padding: 0 20px;
+    font-weight: bold;
+    background: var(--accent-color);
+    color: var(--bg-color);
+}
+
+
+.page-button:first-child:hover,
+.page-button:last-child:hover {
+    background: var(--bg-color);
+    color: var(--accent-color);
+}
+
+.results-grid {
+    margin: 4rem 0;
+    padding: 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .pagination-controls {
+        gap: 6px;
+        padding: 0.75rem;
+    }
+    
+    .page-button {
+        min-width: 36px;
+        height: 36px;
+        font-size: 0.9rem;
+        padding: 0 8px;
+    }
+}
+
+/* Animation */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }

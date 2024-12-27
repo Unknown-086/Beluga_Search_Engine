@@ -42,12 +42,12 @@ public class SearchService {
         new File(barrelMetadataPath).getParentFile().mkdirs();
     }
 
-    private static final Map<String, int[]> DATASET_RANGES = new HashMap<>() {{
-        put("GlobalNewsDataset", new int[]{1000000, 1105351});
-        put("RedditDataset", new int[]{1105352, 1519554});
-        put("WeeklyNewsDataset_Aug17", new int[]{1519555, 1979142});
-        put("WeeklyNewsDataset_Aug18", new int[]{1979143, 2455685});
-    }};
+    // private static final Map<String, int[]> DATASET_RANGES = new HashMap<>() {{
+    //     put("GlobalNewsDataset", new int[]{1000000, 1105351});
+    //     put("RedditDataset", new int[]{1105352, 1519554});
+    //     put("WeeklyNewsDataset_Aug17", new int[]{1519555, 1979142});
+    //     put("WeeklyNewsDataset_Aug18", new int[]{1979143, 2455685});
+    // }};
 
     private void verifyPaths() {
         if (!new File(lexiconPath).exists()) {
@@ -69,35 +69,35 @@ public class SearchService {
     }
 
 
-    private static final Map<String, Map<String, Integer>> DATASET_COLUMNS = new HashMap<>() {{
-        put("GlobalNewsDataset", new HashMap<>() {{
-            put("title", 4);          // title         
-            put("description", 5);     // description 
-            put("source", 2);         // source_name  
-            put("url", 6);           // url           
-        }});
+    // private static final Map<String, Map<String, Integer>> DATASET_COLUMNS = new HashMap<>() {{
+    //     put("GlobalNewsDataset", new HashMap<>() {{
+    //         put("title", 4);          // title         
+    //         put("description", 5);     // description 
+    //         put("source", 2);         // source_name  
+    //         put("url", 6);           // url           
+    //     }});
         
-        put("RedditDataset", new HashMap<>() {{
-            put("title", 3);          // title
-            put("description", 3);     // title
-            put("source", 2);         // subreddit
-            put("url", 7);           // url
-        }});
+    //     put("RedditDataset", new HashMap<>() {{
+    //         put("title", 3);          // title
+    //         put("description", 3);     // title
+    //         put("source", 2);         // subreddit
+    //         put("url", 7);           // url
+    //     }});
         
-        put("WeeklyNewsDataset_Aug17", new HashMap<>() {{
-            put("title", 4);          // headline_text
-            put("description", 4);     // headline_text
-            put("source", 2);         // feed_code
-            put("url", 3);           // source_url
-        }});
+    //     put("WeeklyNewsDataset_Aug17", new HashMap<>() {{
+    //         put("title", 4);          // headline_text
+    //         put("description", 4);     // headline_text
+    //         put("source", 2);         // feed_code
+    //         put("url", 3);           // source_url
+    //     }});
         
-        put("WeeklyNewsDataset_Aug18", new HashMap<>() {{
-            put("title", 4);          // headline_text
-            put("description", 4);     // headline_text
-            put("source", 2);         // feed_code
-            put("url", 3);           // source_url
-        }});
-    }};
+    //     put("WeeklyNewsDataset_Aug18", new HashMap<>() {{
+    //         put("title", 4);          // headline_text
+    //         put("description", 4);     // headline_text
+    //         put("source", 2);         // feed_code
+    //         put("url", 3);           // source_url
+    //     }});
+    // }};
 
     private String resolveBarrelPath(String relativePath) {
         if (relativePath.startsWith("../")) {
@@ -110,15 +110,43 @@ public class SearchService {
         return relativePath;
     }
 
-    public List<SearchResult> search(String query) {
+    public Map<String, Object> search(String query, int page) {
+        // Add debug logging
+        logger.info("Starting search for query: {} page: {}", query, page);
+        
         int wordId = getLexiconWordId(query.toLowerCase());
-        if (wordId == 0) return new ArrayList<>();
+        if (wordId == 0) return createEmptyResponse();
         
         String barrelPath = getBarrelPath(wordId);
-        if (barrelPath.isEmpty()) return new ArrayList<>();
+        if (barrelPath.isEmpty()) return createEmptyResponse();
         
         List<Integer> docIds = getDocIds(barrelPath, wordId);
-        return gpuContentRetriever.getContentGPU(docIds);
+        int totalResults = docIds.size();
+        
+        // Add debug logging
+        logger.info("Found {} total results", totalResults);
+        
+        List<SearchResult> results = gpuContentRetriever.getContentGPU(docIds, page);
+        
+        // Add debug logging
+        logger.info("Retrieved {} results for current page", results.size());
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("results", results);
+        response.put("totalResults", totalResults);
+        response.put("currentPage", page);
+        response.put("totalPages", (int) Math.ceil((double) totalResults / 100));
+        
+        return response;
+    }
+
+    private Map<String, Object> createEmptyResponse() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("results", new ArrayList<>());
+        response.put("totalResults", 0);
+        response.put("currentPage", 1);
+        response.put("totalPages", 0);
+        return response;
     }
 
     private int getLexiconWordId(String word) {
