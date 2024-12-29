@@ -1,14 +1,22 @@
+import sys
+import os
+
+# Add project root to Python path
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(PROJECT_ROOT)
+
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, FileResponse
 from typing import List, Dict
-import os
 import httpx
 import time
 from math import ceil
-from TextPreprocess import preprocessText
+from src.Lexicon.TextPreprocess import preprocessText, preprocessLanguageText
+
+
 app = FastAPI()
 
 # Setup paths
@@ -38,29 +46,45 @@ async def root(request: Request):
         "request": request
     })
 
+@app.get("/js/script.js")
+async def serve_js():
+    js_path = os.path.join(STATIC_DIR, "js", "script.js")
+    if not os.path.exists(js_path):
+        raise HTTPException(status_code=404, detail="JavaScript file not found")
+
+    headers = {
+        'Cache-Control': 'public, max-age=31536000',
+        'Content-Type': 'application/javascript'
+    }
+    return FileResponse(js_path, headers=headers)
 
 @app.get("/results", response_class=HTMLResponse)
-async def results(request: Request, q: str, page: int = 1, source: str = all):
+async def results(request: Request, q: str, page: int = 1, source: str = None, lang: str = None):
     start_time = time.time()
 
-    # Validate source parameter
     if not source:
         raise HTTPException(status_code=400, detail="Source parameter is required")
 
+    if not lang:
+        raise HTTPException(status_code=400, detail="Language parameter is required")
+    print(lang)
     try:
-        # Preprocess search query
-        preprocess_start = time.time()
-        processed_words = preprocessText(q)
-        preprocess_time = time.time() - preprocess_start
-        print(f"\nOriginal query: '{q}', Source: {source}")
+        if lang == "english":
+            processed_words = preprocessText(q)
+        elif lang == "other":
+            processed_words = preprocessLanguageText(q)
+            # processed_words = preprocessText(q)
+
+        # processed_words = preprocessText(q)
+        print(f"\nOriginal query: '{q}', Source: {source}, Lang: {lang}")
         print(f"Preprocessed words: {processed_words}")
-        print(f"Preprocessing time: {preprocess_time:.3f} seconds")
 
         if not processed_words:
             return templates.TemplateResponse("results.html", {
                 "request": request,
                 "query": q,
                 "source": source,
+                "lang": lang,
                 "results": [],
                 "total_results": 0,
                 "current_page": page,
@@ -68,7 +92,6 @@ async def results(request: Request, q: str, page: int = 1, source: str = all):
                 "error": "Please enter a valid search term"
             })
 
-        # Send request with source parameter
         async with httpx.AsyncClient(timeout=30.0) as client:
             words_param = ",".join(processed_words)
             java_start = time.time()
@@ -84,29 +107,23 @@ async def results(request: Request, q: str, page: int = 1, source: str = all):
                     "error": f"Search service error: {response.text}"
                 })
 
-            process_start = time.time()
             data = response.json()
-            process_time = time.time() - process_start
-            print(f"Response processing time: {process_time:.3f} seconds")
-
-            template_start = time.time()
-            response = templates.TemplateResponse("results.html", {
+            template_response = templates.TemplateResponse("results.html", {
                 "request": request,
                 "query": q,
                 "source": source,
+                "lang": lang,
                 "processed_query": " ".join(processed_words),
                 "results": data.get("results", []),
                 "total_results": data.get("totalResults", 0),
                 "current_page": data.get("currentPage", page),
                 "total_pages": data.get("totalPages", 1)
             })
-            template_time = time.time() - template_start
-            print(f"Template rendering time: {template_time:.3f} seconds")
 
             total_time = time.time() - start_time
             print(f"Total request time: {total_time:.3f} seconds\n")
 
-            return response
+            return template_response
 
     except Exception as e:
         print(f"Error processing request: {e}")
@@ -114,6 +131,7 @@ async def results(request: Request, q: str, page: int = 1, source: str = all):
             "request": request,
             "error": f"Error processing request: {str(e)}"
         })
+
 
 @app.get("/api/search")
 async def search(q: str) -> List[Dict]:
@@ -126,14 +144,3 @@ async def search(q: str) -> List[Dict]:
     except httpx.RequestError as e:
         raise HTTPException(status_code=503, detail=f"Java service unavailable: {str(e)}")
 
-
-@app.get("/js/script.js")
-async def serve_js():
-    headers = {
-        'Cache-Control': 'public, max-age=31536000',
-        'Content-Type': 'application/javascript'
-    }
-    return FileResponse(
-        "frontend/static/js/script.js", 
-        headers=headers
-    )

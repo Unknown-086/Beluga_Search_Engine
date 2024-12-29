@@ -21,16 +21,23 @@
                         <div class="search-box">
                             <input type="text" name="q" placeholder="Enter your search query..." required>
                             <input type="hidden" name="source" id="sourceInput">
+                            <input type="hidden" name="lang" id="langInput">
                             <button type="submit">
                                 <span class="search-icon">⌕</span>
                             </button>
                         </div>
                     </form>
-                    <select class="custom-select" onchange="updateSourceInput(this.value)">
-                        <option value="all">All Sources</option>
-                        <option value="reddit">Reddit</option>
-                        <option value="news">News</option>
-                    </select>
+                    <div class="filters">
+                        <select name="source" class="custom-select" onchange="updateSource(this.value)">
+                            <option value="all">All Sources</option>
+                            <option value="reddit">Reddit</option>
+                            <option value="news">News</option>
+                        </select>
+                        <select name="lang" class="custom-select" onchange="updateLang(this.value)">
+                            <option value="english">English</option>
+                            <option value="other">Other Languages</option>
+                        </select>
+                    </div>
                 </div>
             </div>
         </header>

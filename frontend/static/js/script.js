@@ -43,28 +43,30 @@ function toggleTheme() {
 // Source filter update function
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const sourceSelect = document.querySelector('.custom-select');
+    const sourceSelect = document.querySelector('select[name="source"]');
+    const langSelect = document.querySelector('select[name="lang"]');
     const sourceInput = document.getElementById('sourceInput');
+    const langInput = document.getElementById('langInput');
     
-    // Get source from URL or localStorage
+    // Get values from URL or localStorage
     const source = urlParams.get('source') || localStorage.getItem('source') || 'all';
+    const lang = urlParams.get('lang') || localStorage.getItem('lang') || 'english';
     
-    // Update select and hidden input
-    if (sourceSelect) {
-        sourceSelect.value = source;
-    }
-    if (sourceInput) {
-        sourceInput.value = source;
-    }
+    // Update selects and inputs
+    if (sourceSelect) sourceSelect.value = source;
+    if (langSelect) langSelect.value = lang;
+    if (sourceInput) sourceInput.value = source;
+    if (langInput) langInput.value = lang;
     
-    // Form submission handler with source validation
+    // Form submission handler
     const searchForm = document.querySelector('.search-form');
     if (searchForm) {
         searchForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const query = searchForm.querySelector('input[name="q"]').value;
-            const currentSource = document.querySelector('.custom-select').value;
-            window.location.href = `/results?q=${encodeURIComponent(query)}&source=${currentSource}`;
+            const currentSource = sourceSelect.value;
+            const currentLang = langSelect.value;
+            window.location.href = `/results?q=${encodeURIComponent(query)}&source=${currentSource}&lang=${currentLang}`;
         });
     }
 });
@@ -83,4 +85,13 @@ function updateSource(value) {
     localStorage.setItem('source', sourceValue);
     // Don't reload page, just update hidden input
     updateSourceInput(sourceValue);
+}
+
+function updateLang(value) {
+    const langInput = document.getElementById('langInput');
+    const langValue = value || 'english';
+    if (langInput) {
+        langInput.value = langValue;
+        localStorage.setItem('lang', langValue);
+    }
 }

@@ -16,7 +16,7 @@ def translate_text(text, source_lang = 'auto', target_lang = 'en'):
 # Example usage
 if __name__ == "__main__":
     start = time.time()
-    source_text = "世界最大級サウナ「MONSTER SAUNA」2023年冬、吉祥寺駅前にオープン！ 世界最大級サウナ「MONSTER SAUNA」2023年冬、吉祥寺駅前にオープン！ 世界最大級サウナ「MONSTER SAUNA」2023年冬、吉祥寺駅前にオープン！ 世界最大級サウナ「MONSTER SAUNA」2023年冬、吉祥寺駅前にオープン！ 世界最大級サウナ「MONSTER SAUNA」2023年冬、吉祥寺駅前にオープン！ 世界最大級サウナ「MONSTER SAUNA」2023年冬、吉祥寺駅前にオープン！ 世界最大級サウナ「MONSTER SAUNA」2023年冬、吉祥寺駅前にオープン！ 世界最大級サウナ「MONSTER SAUNA」2023年冬、吉祥寺駅前にオープン！ 世界最大級サウナ「MONSTER SAUNA」2023年冬、吉祥寺駅前にオープン！ 世界最大級サウナ「MONSTER SAUNA」2023年冬、吉祥寺駅前にオープン！ 世界最大級サウナ「MONSTER SAUNA」2023年冬、吉祥寺駅前にオープン！ 印度、中东和欧洲的“新经济走廊”能否抗衡中国的“一带一路”"
+    source_text = "بھاڑ میں جاؤ"
     translated_text = translate_text(source_text)  # Korean to English
     end = time.time()
     print(f"Translated Text: {translated_text}")

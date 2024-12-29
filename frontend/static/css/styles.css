@@ -167,13 +167,68 @@ body {
     box-shadow: 0 2px 8px var(--shadow-color);
 }
 
+.results-grid {
+    width: 100%;
+    max-width: 1800px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;  /* Center cards horizontally */
+}
+
 .result-card {
     background: var(--surface-color);
-    padding: 1.5rem;
     border-radius: 12px;
-    box-shadow: 0 2px 8px var(--shadow-color);
-    transition: transform 0.2s, box-shadow 0.2s;
+    padding: 2rem;  
     margin-bottom: 1.5rem;
+    box-shadow: 0 2px 4px var(--shadow-color);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    width: 125%;
+    max-width: 1600px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
+    position: relative;
+    /* left: 0%;    
+    transform: translateX(0%); */
+}
+
+.result-card h2 {
+    margin: 0 0 1rem 0; /* Increased bottom margin */
+    font-size: 1.25rem;
+    color: var(--text-color);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.result-card a {
+    color: var(--link-color);
+    text-decoration: none;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    display: inline-block;
+    max-width: 100%;
+    margin-bottom: 1rem; /* Space after link */
+}
+
+.result-card p {
+    margin: 0 0 1.5rem 0; /* Added bottom margin */
+    color: var(--text-secondary);
+    line-height: 1.6;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    flex-grow: 1; /* Takes up remaining space */
+}
+
+.result-card .source {
+    margin-top: auto; /* Pushes to bottom */
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-tertiary);
+    font-size: 0.9rem;
 }
 
 .result-card:hover {
@@ -404,6 +459,12 @@ body {
     background: var(--background-color);
     color: var(--text-color);
     padding: 1rem;
+}
+
+.filters {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
 }
 
 /* Animation */

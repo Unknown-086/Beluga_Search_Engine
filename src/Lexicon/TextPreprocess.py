@@ -23,7 +23,7 @@ def preprocessText(text):
     words = [word for word in words if word not in stop_words]
     return words
 
-def preprocessLanguageText(text, sourceLanguage):
+def preprocessLanguageText(text, sourceLanguage = 'auto'):
     """
         Preprocess text by:
         - Translating to English
