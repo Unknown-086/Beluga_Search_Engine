@@ -39,3 +39,48 @@ function toggleTheme() {
     document.body.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
 }
+
+// Source filter update function
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sourceSelect = document.querySelector('.custom-select');
+    const sourceInput = document.getElementById('sourceInput');
+    
+    // Get source from URL or localStorage
+    const source = urlParams.get('source') || localStorage.getItem('source') || 'all';
+    
+    // Update select and hidden input
+    if (sourceSelect) {
+        sourceSelect.value = source;
+    }
+    if (sourceInput) {
+        sourceInput.value = source;
+    }
+    
+    // Form submission handler with source validation
+    const searchForm = document.querySelector('.search-form');
+    if (searchForm) {
+        searchForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const query = searchForm.querySelector('input[name="q"]').value;
+            const currentSource = document.querySelector('.custom-select').value;
+            window.location.href = `/results?q=${encodeURIComponent(query)}&source=${currentSource}`;
+        });
+    }
+});
+
+function updateSourceInput(value) {
+    const sourceInput = document.getElementById('sourceInput');
+    const sourceValue = value || 'all';
+    if (sourceInput) {
+        sourceInput.value = sourceValue;
+        localStorage.setItem('source', sourceValue);
+    }
+}
+
+function updateSource(value) {
+    const sourceValue = value || 'all';
+    localStorage.setItem('source', sourceValue);
+    // Don't reload page, just update hidden input
+    updateSourceInput(sourceValue);
+}

@@ -15,14 +15,22 @@
     <main class="home-container">
         <div class="search-container">
             <h1 class="animate-title">Belu Search</h1>
-            <form action="/results" method="GET" class="search-form">
-                <div class="search-box">
-                    <input type="text" name="q" placeholder="Enter your search query..." required>
-                    <button type="submit">
-                        <span class="search-icon">⌕</span>
-                    </button>
-                </div>
-            </form>
+            <div class="search-controls">
+                <form action="/results" method="GET" class="search-form">
+                    <div class="search-box">
+                        <input type="text" name="q" placeholder="Enter your search query..." required>
+                        <input type="hidden" name="source" id="sourceInput">
+                        <button type="submit">
+                            <span class="search-icon">⌕</span>
+                        </button>
+                    </div>
+                </form>
+                <select name="source" class="custom-select" onchange="updateSource(this.value)">
+                    <option value="all">All Sources</option>
+                    <option value="reddit">Reddit</option>
+                    <option value="news">News</option>
+                </select>
+            </div>
         </div>
     </main>
     <script src="{{ url_for('static', path='/js/script.js') }}"></script>

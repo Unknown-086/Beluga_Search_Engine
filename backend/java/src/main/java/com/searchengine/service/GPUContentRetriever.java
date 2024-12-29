@@ -229,26 +229,34 @@ public class GPUContentRetriever {
         });
     }
 
-    public List<Object> getContentGPU(List<Integer> docIds, int page) {
+    public List<Object> getContentGPU(List<Integer> docIds, int page, String source) {
         if (docIds == null || docIds.isEmpty()) {
             return Arrays.asList(Collections.emptyList(), 0);
         }
     
-        // String[] redditDataset = {
-        //     "GlobalNewsDataset"
-        // };
-        
-        // docIds = filterDocIdsByDataset(docIds, redditDataset);
+        // Filter by source
+        if (!"all".equals(source)) {
+            String[] datasets;
+            switch(source) {
+                case "reddit":
+                    datasets = new String[]{"RedditDataset"};
+                    break;
+                case "news":
+                    datasets = new String[]{"GlobalNewsDataset", "WeeklyNewsDataset_Aug17", "WeeklyNewsDataset_Aug18"};
+                    break;
+                default:
+                    datasets = DATASET_RANGES.keySet().toArray(new String[0]);
+            }
+            docIds = filterDocIdsByDataset(docIds, datasets);
+        }
+    
         int totalFilteredResults = docIds.size();
     
         // Calculate pagination bounds
         int startIndex = (page - 1) * PAGE_SIZE;
         int endIndex = Math.min(startIndex + PAGE_SIZE, docIds.size());
         
-        // Get subset of docIds for current page
         List<Integer> pageDocIds = docIds.subList(startIndex, endIndex);
-    
-        // Process page batch
         List<SearchResult> results = pageDocIds.parallelStream()
             .collect(Collectors.groupingBy(id -> id / BATCH_SIZE))
             .values()
@@ -256,7 +264,7 @@ public class GPUContentRetriever {
             .map(batch -> processBatch(batch))
             .flatMap(Collection::stream)
             .collect(Collectors.toList());
-
+    
         results.sort(Comparator.comparingInt(result -> 
             pageDocIds.indexOf(result.getDocId())));
     

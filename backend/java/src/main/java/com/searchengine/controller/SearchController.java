@@ -19,7 +19,8 @@ public class SearchController {
     @GetMapping("/search")
     public Map<String, Object> search(
             @RequestParam String query,
-            @RequestParam(defaultValue = "1") int page) {
-        return searchService.search(query, page);
+            @RequestParam int page,
+            @RequestParam String source) {
+        return searchService.search(query, page, source);
     }
 }

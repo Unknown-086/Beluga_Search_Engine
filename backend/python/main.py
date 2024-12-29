@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from typing import List, Dict
 import os
 import httpx
@@ -34,19 +34,25 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("index.html", {
+        "request": request
+    })
 
 
 @app.get("/results", response_class=HTMLResponse)
-async def results(request: Request, q: str, page: int = 1):
+async def results(request: Request, q: str, page: int = 1, source: str = all):
     start_time = time.time()
+
+    # Validate source parameter
+    if not source:
+        raise HTTPException(status_code=400, detail="Source parameter is required")
 
     try:
         # Preprocess search query
         preprocess_start = time.time()
         processed_words = preprocessText(q)
         preprocess_time = time.time() - preprocess_start
-        print(f"\nOriginal query: '{q}'")
+        print(f"\nOriginal query: '{q}', Source: {source}")
         print(f"Preprocessed words: {processed_words}")
         print(f"Preprocessing time: {preprocess_time:.3f} seconds")
 
@@ -54,6 +60,7 @@ async def results(request: Request, q: str, page: int = 1):
             return templates.TemplateResponse("results.html", {
                 "request": request,
                 "query": q,
+                "source": source,
                 "results": [],
                 "total_results": 0,
                 "current_page": page,
@@ -61,13 +68,12 @@ async def results(request: Request, q: str, page: int = 1):
                 "error": "Please enter a valid search term"
             })
 
-        # Send all words, not just first one
+        # Send request with source parameter
         async with httpx.AsyncClient(timeout=30.0) as client:
-            # Convert array to comma-separated string
             words_param = ",".join(processed_words)
             java_start = time.time()
             response = await client.get(
-                f"http://localhost:8080/api/java/search?query={words_param}&page={page}"
+                f"http://localhost:8080/api/java/search?query={words_param}&page={page}&source={source}"
             )
             java_time = time.time() - java_start
             print(f"Java service request time: {java_time:.3f} seconds")
@@ -87,7 +93,8 @@ async def results(request: Request, q: str, page: int = 1):
             response = templates.TemplateResponse("results.html", {
                 "request": request,
                 "query": q,
-                "processed_query": " ".join(processed_words),  # Show all processed words
+                "source": source,
+                "processed_query": " ".join(processed_words),
                 "results": data.get("results", []),
                 "total_results": data.get("totalResults", 0),
                 "current_page": data.get("currentPage", page),
@@ -95,6 +102,9 @@ async def results(request: Request, q: str, page: int = 1):
             })
             template_time = time.time() - template_start
             print(f"Template rendering time: {template_time:.3f} seconds")
+
+            total_time = time.time() - start_time
+            print(f"Total request time: {total_time:.3f} seconds\n")
 
             return response
 
@@ -104,7 +114,6 @@ async def results(request: Request, q: str, page: int = 1):
             "request": request,
             "error": f"Error processing request: {str(e)}"
         })
-
 
 @app.get("/api/search")
 async def search(q: str) -> List[Dict]:
@@ -116,3 +125,15 @@ async def search(q: str) -> List[Dict]:
             return response.json()
     except httpx.RequestError as e:
         raise HTTPException(status_code=503, detail=f"Java service unavailable: {str(e)}")
+
+
+@app.get("/js/script.js")
+async def serve_js():
+    headers = {
+        'Cache-Control': 'public, max-age=31536000',
+        'Content-Type': 'application/javascript'
+    }
+    return FileResponse(
+        "frontend/static/js/script.js", 
+        headers=headers
+    )

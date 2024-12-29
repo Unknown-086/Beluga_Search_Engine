@@ -16,14 +16,22 @@
         <header class="results-header">
             <div class="header-content">
                 <a href="/" class="logo">Belu Search</a>
-                <form action="/results" method="GET" class="results-search-form">
-                    <div class="search-box compact">
-                        <input type="text" name="q" value="{{ query }}" placeholder="Search again..." required>
-                        <button type="submit">
-                            <span class="search-icon">⌕</span>
-                        </button>
-                    </div>
-                </form>
+                <div class="search-controls">
+                    <form action="/results" method="GET" class="search-form">
+                        <div class="search-box">
+                            <input type="text" name="q" placeholder="Enter your search query..." required>
+                            <input type="hidden" name="source" id="sourceInput">
+                            <button type="submit">
+                                <span class="search-icon">⌕</span>
+                            </button>
+                        </div>
+                    </form>
+                    <select class="custom-select" onchange="updateSourceInput(this.value)">
+                        <option value="all">All Sources</option>
+                        <option value="reddit">Reddit</option>
+                        <option value="news">News</option>
+                    </select>
+                </div>
             </div>
         </header>
         
@@ -35,7 +43,7 @@
             <!-- Top pagination -->
             <div class="pagination-controls">
                 {% if current_page > 1 %}
-                    <a href="/results?q={{ query }}&page={{ current_page - 1 }}" class="page-button">Previous</a>
+                    <a href="/results?q={{ query }}&page={{ current_page - 1 }}&source={{ source }}" class="page-button">Previous</a>
                 {% endif %}
                 
                 {% set start = [current_page - 4, 1] | max %}
@@ -53,7 +61,7 @@
                     {% if page == current_page %}
                         <span class="page-button active">{{ page }}</span>
                     {% else %}
-                        <a href="/results?q={{ query }}&page={{ page }}" class="page-button">{{ page }}</a>
+                        <a href="/results?q={{ query }}&page={{ page }}&source={{ source }}" class="page-button">{{ page }}</a>
                     {% endif %}
                 {% endfor %}
                 
@@ -65,7 +73,7 @@
                 {% endif %}
                 
                 {% if current_page < total_pages %}
-                    <a href="/results?q={{ query }}&page={{ current_page + 1 }}" class="page-button">Next</a>
+                    <a href="/results?q={{ query }}&page={{ current_page + 1 }}&source={{ source }}" class="page-button">Next</a>
                 {% endif %}
             </div>
 
@@ -97,8 +105,8 @@
             <!-- Bottom pagination (same as top) -->
             <div class="pagination-controls">
                 {% if current_page > 1 %}
-                    <a href="/results?q={{ query }}&page={{ current_page - 1 }}" class="page-button">Previous</a>
-                {% endif %}
+                    <a href="/results?q={{ query }}&page={{ current_page - 1 }}&source={{ source }}" class="page-button">Previous</a>
+                {% endif %}ndif %}
                 
                 {% set start = [current_page - 4, 1] | max %}
                 {% set end = [start + 9, total_pages] | min %}
@@ -115,9 +123,10 @@
                     {% if page == current_page %}
                         <span class="page-button active">{{ page }}</span>
                     {% else %}
-                        <a href="/results?q={{ query }}&page={{ page }}" class="page-button">{{ page }}</a>
+                        <a href="/results?q={{ query }}&page={{ page }}&source={{ source }}" class="page-button">{{ page }}</a>
                     {% endif %}
                 {% endfor %}
+            
                 
                 {% if end < total_pages %}
                     {% if end < total_pages - 1 %}
@@ -127,7 +136,7 @@
                 {% endif %}
                 
                 {% if current_page < total_pages %}
-                    <a href="/results?q={{ query }}&page={{ current_page + 1 }}" class="page-button">Next</a>
+                    <a href="/results?q={{ query }}&page={{ current_page + 1 }}&source={{ source }}" class="page-button">Next</a>
                 {% endif %}
             </div>
         </main>

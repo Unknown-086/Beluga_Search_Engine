@@ -121,29 +121,25 @@ public class SearchService {
         return relativePath;
     }
 
-    public Map<String, Object> search(String query, int page) {
-        // Split comma-separated query into word array
+    public Map<String, Object> search(String query, int page, String source) {
         List<String> queryWords = Arrays.asList(query.split(","));
-        return search(queryWords, page);
+        return search(queryWords, page, source);
     }
     
-    public Map<String, Object> search(List<String> queryWords, int page) {
+    public Map<String, Object> search(List<String> queryWords, int page, String source) {
         if (queryWords == null || queryWords.isEmpty()) {
             return createEmptyResponse();
         }
     
-        // Single word query - use existing logic
         if (queryWords.size() == 1) {
-            return searchSingleWord(queryWords.get(0), page);
+            return searchSingleWord(queryWords.get(0), page, source);
         }
     
-        // Multi word query
-        return searchMultiWord(queryWords, page);
+        return searchMultiWord(queryWords, page, source);
     }
-
-
-    public Map<String, Object> searchSingleWord(String query, int page) {
-        logger.info("Starting search for preprocessed query: {} page: {}", query, page);
+    
+    public Map<String, Object> searchSingleWord(String query, int page, String source) {
+        logger.info("Starting search for query: {} page: {} source: {}", query, page, source);
         
         int wordId = getLexiconWordIdFromCache(query);
         if (wordId == 0) {
@@ -163,11 +159,11 @@ public class SearchService {
             .map(e -> Integer.parseInt(e.getKey()))
             .collect(Collectors.toList());
             
-        List<Object> contentResult = gpuContentRetriever.getContentGPU(docIds, page);
+        List<Object> contentResult = gpuContentRetriever.getContentGPU(docIds, page, source);
         return createResponse(contentResult, page);
     }
 
-    private Map<String, Object> searchMultiWord(List<String> words, int page) {
+    private Map<String, Object> searchMultiWord(List<String> words, int page, String source) {
         try {
             long startTime = System.currentTimeMillis();
             
@@ -217,7 +213,7 @@ public class SearchService {
                 }
             }
     
-            // Sort and convert to final format
+                // Sort and convert to final format
             List<Integer> finalDocIds = docIntersections.entrySet().stream()
                 .sorted(Map.Entry.<String, Integer>comparingByValue()
                     .reversed()
@@ -226,13 +222,14 @@ public class SearchService {
                     ))
                 .map(e -> Integer.parseInt(e.getKey()))
                 .collect(Collectors.toList());
-    
+
             logger.info("Results processed in {}ms", System.currentTimeMillis() - startTime);
                 
-            List<Object> contentResult = gpuContentRetriever.getContentGPU(finalDocIds, page);
+            List<Object> contentResult = gpuContentRetriever.getContentGPU(finalDocIds, page, source);
             return createResponse(contentResult, page);
-    
-        } catch (Exception e) {
+
+        } 
+        catch (Exception e) {
             logger.error("Error in multi-word search: {}", e.getMessage());
             return createEmptyResponse();
         }
