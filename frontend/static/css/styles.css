@@ -217,18 +217,24 @@ body {
 
 /* Pagination Controls */
 .pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
     margin: 3rem 0;
     padding: 1.5rem;
     background: var(--surface-color);
     border-radius: 12px;
     box-shadow: 0 2px 12px var(--shadow-color);
+    flex-direction: row;  /* Ensure horizontal layout */
+    flex-wrap: wrap;      /* Allow wrapping on small screens */
 }
-
 .page-button {
     min-width: 40px;
     height: 40px;
-    display: flex;
+    display: inline-flex;  /* Change to inline-flex */
     align-items: center;
+    margin: 0 4px;         /* Add horizontal spacing */
     justify-content: center;
     border: 2px solid var(--accent-color);
     border-radius: 8px;
@@ -303,6 +309,7 @@ body {
     .pagination-controls {
         gap: 6px;
         padding: 0.75rem;
+        justify-content: center;
     }
     
     .page-button {
@@ -311,6 +318,24 @@ body {
         font-size: 0.9rem;
         padding: 0 8px;
     }
+}
+
+.result-reddit-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    margin-left: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+.reddit-score, .reddit-comments {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 1rem;
+    background: var(--surface-color);
 }
 
 /* Animation */

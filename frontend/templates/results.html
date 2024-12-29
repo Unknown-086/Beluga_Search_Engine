@@ -78,6 +78,12 @@
                         <p class="result-description">{{ result.description }}</p>
                         <div class="result-meta">
                             <span class="result-source">{{ result.source }}</span>
+                            {% if result.isReddit %}
+                                <span class="result-reddit-meta">
+                                    <span class="reddit-score">↑ {{ result.score }}</span>
+                                    <span class="reddit-comments">💬 {{ result.numComments }}</span>
+                                </span>
+                            {% endif %}
                         </div>
                     </div>
                     {% endfor %}

@@ -1,4 +1,6 @@
 import re
+import time
+
 from nltk.corpus import stopwords
 from src.WebTranslateAPI.AWSTranslationAPI import translate_text
 
@@ -41,4 +43,3 @@ def preprocessLanguageText(text, sourceLanguage):
     text = text.lower()  # Convert to lowercase
     text = re.sub(r'[^\s\da-zA-Z]', ' ', text) # Remove punctuation
     return re.findall(r'\b\w+\b', text)  # Tokenize using regex
-

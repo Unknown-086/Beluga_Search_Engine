@@ -8,7 +8,7 @@ import os
 import httpx
 import time
 from math import ceil
-
+from TextPreprocess import preprocessText
 app = FastAPI()
 
 # Setup paths
@@ -42,33 +42,52 @@ async def results(request: Request, q: str, page: int = 1):
     start_time = time.time()
 
     try:
+        # Preprocess search query
+        preprocess_start = time.time()
+        processed_words = preprocessText(q)
+        preprocess_time = time.time() - preprocess_start
+        print(f"\nOriginal query: '{q}'")
+        print(f"Preprocessed words: {processed_words}")
+        print(f"Preprocessing time: {preprocess_time:.3f} seconds")
+
+        if not processed_words:
+            return templates.TemplateResponse("results.html", {
+                "request": request,
+                "query": q,
+                "results": [],
+                "total_results": 0,
+                "current_page": page,
+                "total_pages": 0,
+                "error": "Please enter a valid search term"
+            })
+
+        # Send all words, not just first one
         async with httpx.AsyncClient(timeout=30.0) as client:
-            # Time Java request
+            # Convert array to comma-separated string
+            words_param = ",".join(processed_words)
             java_start = time.time()
             response = await client.get(
-                f"http://localhost:8080/api/java/search?query={q}&page={page}"
+                f"http://localhost:8080/api/java/search?query={words_param}&page={page}"
             )
             java_time = time.time() - java_start
-            print(f"\nQuery: '{q}'")
             print(f"Java service request time: {java_time:.3f} seconds")
-            
+
             if response.status_code != 200:
                 return templates.TemplateResponse("error.html", {
                     "request": request,
                     "error": f"Search service error: {response.text}"
                 })
 
-            # Time response processing
             process_start = time.time()
             data = response.json()
             process_time = time.time() - process_start
             print(f"Response processing time: {process_time:.3f} seconds")
-            
-            # Time template generation
+
             template_start = time.time()
             response = templates.TemplateResponse("results.html", {
                 "request": request,
                 "query": q,
+                "processed_query": " ".join(processed_words),  # Show all processed words
                 "results": data.get("results", []),
                 "total_results": data.get("totalResults", 0),
                 "current_page": data.get("currentPage", page),
@@ -77,13 +96,10 @@ async def results(request: Request, q: str, page: int = 1):
             template_time = time.time() - template_start
             print(f"Template rendering time: {template_time:.3f} seconds")
 
-            total_time = time.time() - start_time
-            print(f"Total request time: {total_time:.3f} seconds\n")
-
             return response
 
     except Exception as e:
-        print(f"Error processing request: {e}")  # Debug print
+        print(f"Error processing request: {e}")
         return templates.TemplateResponse("error.html", {
             "request": request,
             "error": f"Error processing request: {str(e)}"

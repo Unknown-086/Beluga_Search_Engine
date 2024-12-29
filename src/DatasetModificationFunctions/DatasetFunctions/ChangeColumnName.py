@@ -20,9 +20,9 @@ def changeColumnName(inputFile, outputPath, oldColumnName, newColumnName):
 
 if __name__ == '__main__':
 
-    filePath = os.path.join('../../..', 'data', 'FilteredDatasets', 'ModifiedReddit_database11_English.csv')
-    outputPath = os.path.join('../../..', 'data', 'FilteredDatasets', 'ModifiedReddit_database11_English_date.csv')
-    oldColumnName = 'created_date'
+    filePath = os.path.join('../../..', 'data', 'Testing', 'WeeklyNewsDataset_Aug18_Testing.csv')
+    outputPath = os.path.join('../../..', 'data', 'Testing', 'WeeklyNewsDataset_Aug18_Testing.csv')
+    oldColumnName = 'publish_time'
     newColumnName = 'date'
 
     changeColumnName(filePath, outputPath, oldColumnName, newColumnName)

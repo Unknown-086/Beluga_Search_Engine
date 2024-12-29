@@ -10,8 +10,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import java.io.*;
 import java.util.*;
-import com.opencsv.CSVReader;
-import com.opencsv.CSVReaderBuilder;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -21,6 +20,54 @@ public class SearchService {
     private final String basePath;
     private final String lexiconPath;
     private final String barrelMetadataPath;
+
+        // Add cache fields
+    private Map<String, Integer> lexiconCache;
+    private Map<String, String> barrelMetadataCache;
+    
+    
+        // Add cache initialization
+    @PostConstruct
+    private void initCache() {
+        logger.info("Initializing caches...");
+        lexiconCache = loadLexicon();
+        barrelMetadataCache = loadBarrelMetadata();
+        logger.info("Caches initialized");
+    }
+
+    // Add cache loading methods
+    private Map<String, Integer> loadLexicon() {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(new File(lexiconPath), new TypeReference<Map<String, Integer>>() {});
+        } catch (Exception e) {
+            logger.error("Error loading lexicon: {}", e.getMessage());
+            return new HashMap<>();
+        }
+    }
+    
+    private Map<String, String> loadBarrelMetadata() {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(new File(barrelMetadataPath), new TypeReference<Map<String, String>>() {});
+        } catch (Exception e) {
+            logger.error("Error loading barrel metadata: {}", e.getMessage());
+            return new HashMap<>();
+        }
+    }
+
+            // Add cache lookup methods
+    private int getLexiconWordIdFromCache(String word) {
+        return lexiconCache.getOrDefault(word.toLowerCase(), 0);
+    }
+
+    private String getBarrelPathFromCache(int wordId) {
+        int barrelId = wordId % 4000 + 1;
+        String barrelKey = String.valueOf(barrelId);
+        return barrelMetadataCache.getOrDefault(barrelKey, "");
+    }
+
+    
 
     public SearchService(GPUContentRetriever gpuContentRetriever) {
         this.gpuContentRetriever = gpuContentRetriever;
@@ -36,18 +83,13 @@ public class SearchService {
         createDirectoriesIfNeeded();
         verifyPaths();
     }
+
+    
     
     private void createDirectoriesIfNeeded() {
         new File(lexiconPath).getParentFile().mkdirs();
         new File(barrelMetadataPath).getParentFile().mkdirs();
     }
-
-    // private static final Map<String, int[]> DATASET_RANGES = new HashMap<>() {{
-    //     put("GlobalNewsDataset", new int[]{1000000, 1105351});
-    //     put("RedditDataset", new int[]{1105352, 1519554});
-    //     put("WeeklyNewsDataset_Aug17", new int[]{1519555, 1979142});
-    //     put("WeeklyNewsDataset_Aug18", new int[]{1979143, 2455685});
-    // }};
 
     private void verifyPaths() {
         if (!new File(lexiconPath).exists()) {
@@ -68,37 +110,6 @@ public class SearchService {
         DATASET_PATHS.put("WeeklyNewsDataset_Aug18", new File(basePath, "Testing/WeeklyNewsDataset_Aug18_Testing.csv").getAbsolutePath());
     }
 
-
-    // private static final Map<String, Map<String, Integer>> DATASET_COLUMNS = new HashMap<>() {{
-    //     put("GlobalNewsDataset", new HashMap<>() {{
-    //         put("title", 4);          // title         
-    //         put("description", 5);     // description 
-    //         put("source", 2);         // source_name  
-    //         put("url", 6);           // url           
-    //     }});
-        
-    //     put("RedditDataset", new HashMap<>() {{
-    //         put("title", 3);          // title
-    //         put("description", 3);     // title
-    //         put("source", 2);         // subreddit
-    //         put("url", 7);           // url
-    //     }});
-        
-    //     put("WeeklyNewsDataset_Aug17", new HashMap<>() {{
-    //         put("title", 4);          // headline_text
-    //         put("description", 4);     // headline_text
-    //         put("source", 2);         // feed_code
-    //         put("url", 3);           // source_url
-    //     }});
-        
-    //     put("WeeklyNewsDataset_Aug18", new HashMap<>() {{
-    //         put("title", 4);          // headline_text
-    //         put("description", 4);     // headline_text
-    //         put("source", 2);         // feed_code
-    //         put("url", 3);           // source_url
-    //     }});
-    // }};
-
     private String resolveBarrelPath(String relativePath) {
         if (relativePath.startsWith("../")) {
             // Convert relative path to absolute
@@ -111,26 +122,183 @@ public class SearchService {
     }
 
     public Map<String, Object> search(String query, int page) {
-        // Add debug logging
-        logger.info("Starting search for query: {} page: {}", query, page);
+        // Split comma-separated query into word array
+        List<String> queryWords = Arrays.asList(query.split(","));
+        return search(queryWords, page);
+    }
+    
+    public Map<String, Object> search(List<String> queryWords, int page) {
+        if (queryWords == null || queryWords.isEmpty()) {
+            return createEmptyResponse();
+        }
+    
+        // Single word query - use existing logic
+        if (queryWords.size() == 1) {
+            return searchSingleWord(queryWords.get(0), page);
+        }
+    
+        // Multi word query
+        return searchMultiWord(queryWords, page);
+    }
+
+
+    public Map<String, Object> searchSingleWord(String query, int page) {
+        logger.info("Starting search for preprocessed query: {} page: {}", query, page);
         
-        int wordId = getLexiconWordId(query.toLowerCase());
-        if (wordId == 0) return createEmptyResponse();
+        int wordId = getLexiconWordIdFromCache(query);
+        if (wordId == 0) {
+            logger.info("No word ID found for query: {}", query);
+            return createEmptyResponse();
+        }
         
-        String barrelPath = getBarrelPath(wordId);
-        if (barrelPath.isEmpty()) return createEmptyResponse();
+        String barrelPath = getBarrelPathFromCache(wordId);
+        if (barrelPath.isEmpty()) {
+            logger.info("No barrel path found for word ID: {}", wordId);
+            return createEmptyResponse();
+        }
         
-        List<Integer> docIds = getDocIds(barrelPath, wordId);
-        int totalResults = docIds.size();
+        Map<String, Double> rankedDocs = getDocIdsWithRanks(barrelPath, wordId);
+        List<Integer> docIds = rankedDocs.entrySet().stream()
+            .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+            .map(e -> Integer.parseInt(e.getKey()))
+            .collect(Collectors.toList());
+            
+        List<Object> contentResult = gpuContentRetriever.getContentGPU(docIds, page);
+        return createResponse(contentResult, page);
+    }
+
+    private Map<String, Object> searchMultiWord(List<String> words, int page) {
+        try {
+            long startTime = System.currentTimeMillis();
+            
+            // Parallel word document retrieval
+            Map<Integer, Map<String, Double>> wordDocuments = words.parallelStream()
+                .map(word -> {
+                    int wordId = getLexiconWordIdFromCache(word);
+                    if (wordId == 0) return null;
+                    
+                    String barrelPath = getBarrelPathFromCache(wordId);
+                    if (barrelPath.isEmpty()) return null;
+                    
+                    Map<String, Double> docRanks = getDocIdsWithRanks(barrelPath, wordId);
+                    return new AbstractMap.SimpleEntry<>(wordId, docRanks);
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(
+                    Map.Entry::getKey,
+                    Map.Entry::getValue
+                ));
+    
+            logger.info("Word documents retrieved in {}ms", System.currentTimeMillis() - startTime);
+            
+            // Fast intersection using HashSet
+            Map<String, Integer> docIntersections = new HashMap<>();
+            Map<String, Double> docScores = new HashMap<>();
+            
+            Set<String> allDocIds = wordDocuments.values().stream()
+                .flatMap(m -> m.keySet().stream())
+                .collect(Collectors.toSet());
+                
+            for (String docId : allDocIds) {
+                int intersectCount = 0;
+                double totalRank = 0.0;
+                
+                for (Map<String, Double> wordDocs : wordDocuments.values()) {
+                    Double rank = wordDocs.get(docId);
+                    if (rank != null) {
+                        intersectCount++;
+                        totalRank += rank;
+                    }
+                }
+                
+                if (intersectCount > 0) {
+                    docIntersections.put(docId, intersectCount);
+                    docScores.put(docId, totalRank);
+                }
+            }
+    
+            // Sort and convert to final format
+            List<Integer> finalDocIds = docIntersections.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue()
+                    .reversed()
+                    .thenComparing((e1, e2) -> 
+                        docScores.get(e2.getKey()).compareTo(docScores.get(e1.getKey()))
+                    ))
+                .map(e -> Integer.parseInt(e.getKey()))
+                .collect(Collectors.toList());
+    
+            logger.info("Results processed in {}ms", System.currentTimeMillis() - startTime);
+                
+            List<Object> contentResult = gpuContentRetriever.getContentGPU(finalDocIds, page);
+            return createResponse(contentResult, page);
+    
+        } catch (Exception e) {
+            logger.error("Error in multi-word search: {}", e.getMessage());
+            return createEmptyResponse();
+        }
+    }
+    
+    private Map<Integer, Map<String, Double>> groupByIntersection(Map<Integer, Map<String, Double>> wordDocuments) {
+        Map<Integer, Map<String, Double>> intersectionLevels = new HashMap<>();
+        Set<String> allDocIds = wordDocuments.values().stream()
+                .flatMap(m -> m.keySet().stream())
+                .collect(Collectors.toSet());
+    
+        for (String docId : allDocIds) {
+            int intersectionCount = 0;
+            double totalRank = 0.0;
+            
+            for (Map<String, Double> wordDocs : wordDocuments.values()) {
+                if (wordDocs.containsKey(docId)) {
+                    intersectionCount++;
+                    totalRank += wordDocs.get(docId);
+                }
+            }
+            
+            intersectionLevels.computeIfAbsent(intersectionCount, k -> new HashMap<>())
+                    .put(docId, totalRank);
+        }
+        return intersectionLevels;
+    }
+    
+    private List<Integer> combineAndSortResults(Map<Integer, Map<String, Double>> intersectionLevels, int maxLevel) {
+        List<String> orderedDocIds = new ArrayList<>();
+        for (int level = maxLevel; level > 0; level--) {
+            Map<String, Double> docsAtLevel = intersectionLevels.get(level);
+            if (docsAtLevel != null) {
+                List<String> sortedDocs = docsAtLevel.entrySet().stream()
+                        .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+                        .map(Map.Entry::getKey)
+                        .collect(Collectors.toList());
+                orderedDocIds.addAll(sortedDocs);
+            }
+        }
         
-        // Add debug logging
-        logger.info("Found {} total results", totalResults);
-        
-        List<SearchResult> results = gpuContentRetriever.getContentGPU(docIds, page);
-        
-        // Add debug logging
-        logger.info("Retrieved {} results for current page", results.size());
-        
+        return orderedDocIds.stream()
+                .map(Integer::parseInt)
+                .collect(Collectors.toList());
+    }
+
+
+    private Map<String, Double> getDocIdsWithRanks(String barrelPath, int wordId) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Map<String, Double>> barrelData = mapper.readValue(
+                new File(barrelPath),
+                new TypeReference<Map<String, Map<String, Double>>>() {}
+            );
+            
+            return barrelData.getOrDefault(String.valueOf(wordId), new HashMap<>());
+        } catch (Exception e) {
+            logger.error("Error reading barrel: {}", e.getMessage());
+            return new HashMap<>();
+        }
+    }
+    
+    private Map<String, Object> createResponse(List<Object> contentResult, int page) {
+        List<SearchResult> results = (List<SearchResult>) contentResult.get(0);
+        int totalResults = (Integer) contentResult.get(1);
+    
         Map<String, Object> response = new HashMap<>();
         response.put("results", results);
         response.put("totalResults", totalResults);
@@ -148,155 +316,4 @@ public class SearchService {
         response.put("totalPages", 0);
         return response;
     }
-
-    private int getLexiconWordId(String word) {
-        try {
-            logger.info("Loading lexicon from {}", this.lexiconPath);
-            ObjectMapper mapper = new ObjectMapper();
-            Map<String, Integer> lexicon = mapper.readValue(new File(this.lexiconPath), 
-                new TypeReference<Map<String, Integer>>() {});
-                
-            Integer wordId = lexicon.get(word);
-            if (wordId != null) {
-                logger.info("Word '{}' found with WordID: {}", word, wordId);
-                return wordId;
-            } else {
-                logger.info("Word '{}' not found in lexicon.", word);
-                return 0;
-            }
-        } catch (FileNotFoundException e) {
-            logger.error("Error: Lexicon file '{}' not found.", this.lexiconPath);
-            return 0;
-        } catch (Exception e) {
-            logger.error("Unexpected error while loading lexicon: {}", e.getMessage());
-            return 0;
-        }
-    }
-
-    private String getBarrelPath(int wordId) {
-        try {
-            logger.info("Loading barrel metadata from {}", this.barrelMetadataPath);
-            ObjectMapper mapper = new ObjectMapper();
-            Map<String, String> barrelMetadata = mapper.readValue(new File(this.barrelMetadataPath), 
-                new TypeReference<Map<String, String>>() {});
-    
-            // Get number of barrels
-            int numBarrels = barrelMetadata.size();
-            if (numBarrels == 0) {
-                System.out.println("No barrels found in metadata.");
-                return "";
-            }
-    
-            // Calculate barrel index (1-based)
-            int barrelIndex = (wordId % numBarrels) + 1;
-            String barrelKey = String.valueOf(barrelIndex);
-    
-            String barrelPath = barrelMetadata.get(barrelKey);
-            if (barrelPath == null || barrelPath.isEmpty()) {
-                System.out.println("No barrel found for index " + barrelKey);
-                return "";
-            }
-    
-            System.out.println("Found barrel path: " + barrelPath);
-            return barrelPath;
-    
-        } catch (FileNotFoundException e) {
-            System.err.println("Error: Barrel metadata file not found: " + e.getMessage());
-            return "";
-        } catch (Exception e) {
-            System.err.println("Unexpected error accessing barrel metadata: " + e.getMessage());
-            return "";
-        }
-    }
-
-
-    private List<Integer> getDocIds(String barrelPath, int wordId) {
-        try {
-            String absolutePath = resolveBarrelPath(barrelPath);
-            // logger.info("Loading barrel from {}", absolutePath);
-            ObjectMapper mapper = new ObjectMapper();
-            Map<String, List<Integer>> barrelData = mapper.readValue(new File(absolutePath),
-                new TypeReference<Map<String, List<Integer>>>() {});
-    
-            List<Integer> docIds = barrelData.getOrDefault(String.valueOf(wordId), new ArrayList<>());
-            logger.info("Found {} document IDs for WordID {}", docIds.size(), wordId);
-            return docIds;
-    
-        } catch (Exception e) {
-            logger.error("Error reading barrel: {}", e.getMessage());
-            return new ArrayList<>();
-        }
-    }
-
-    // private String identifyDataset(int docId) {
-    //     for (Map.Entry<String, int[]> entry : DATASET_RANGES.entrySet()) {
-    //         int[] range = entry.getValue();
-    //         if (docId >= range[0] && docId <= range[1]) {
-    //             return entry.getKey();
-    //         }
-    //     }
-    //     return null;
-    // }
-
-    // private Map<String, String> retrieveContent(int docId) {
-    //     String datasetName = identifyDataset(docId);
-    //     if (datasetName == null) {
-    //         logger.error("DocID {} not found in any dataset range", docId);
-    //         return null;
-    //     }
-    
-    //     String datasetPath = DATASET_PATHS.get(datasetName);
-    //     Map<String, Integer> columnMap = DATASET_COLUMNS.get(datasetName);
-        
-    //     try (FileReader fileReader = new FileReader(datasetPath);
-    //          CSVReader reader = new CSVReaderBuilder(fileReader)
-    //             .withSkipLines(1)
-    //             .build()) {
-                
-    //         String[] line;
-    //         while ((line = reader.readNext()) != null) {
-    //             try {
-    //                 String docIdStr = line[0].trim();
-    //                 if (!docIdStr.isEmpty() && Integer.parseInt(docIdStr) == docId) {
-    //                     Map<String, String> content = new HashMap<>();
-    //                     for (Map.Entry<String, Integer> entry : columnMap.entrySet()) {
-    //                         int colIndex = entry.getValue();
-    //                         if (colIndex < line.length) {
-    //                             content.put(entry.getKey(), line[colIndex]);
-    //                         }
-    //                     }
-    //                     return content;
-    //                 }
-    //             } catch (NumberFormatException e) {
-    //                 logger.debug("Skipping invalid line for docId: {}", docId);
-    //                 continue;
-    //             }
-    //         }
-    //         return null;
-    //     } catch (Exception e) {
-    //         logger.error("Error retrieving content for DocID {}: {}", docId, e.getMessage());
-    //         return null;
-    //     }
-    // }
-
-    // private List<SearchResult> getContent(List<Integer> docIds) {
-    //     List<SearchResult> results = new ArrayList<>();
-    //     for (Integer docId : docIds) {
-    //         try {
-    //             Map<String, String> content = retrieveContent(docId);
-    //             if (content != null) {
-    //                 SearchResult result = new SearchResult();
-    //                 result.setDocId(docId);
-    //                 result.setTitle(content.get("title"));
-    //                 result.setDescription(content.get("description"));
-    //                 result.setUrl(content.get("url"));
-    //                 result.setSource(content.get("source"));
-    //                 results.add(result);
-    //             }
-    //         } catch (Exception e) {
-    //             System.err.println("Error retrieving content for DocID " + docId + ": " + e.getMessage());
-    //         }
-    //     }
-    //     return results;
-    // }
 }

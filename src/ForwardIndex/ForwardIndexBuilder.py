@@ -4,74 +4,181 @@ from collections import defaultdict
 from src.Lexicon.TextPreprocess import preprocessText
 
 
-def buildForwardIndex(datasetPaths, columnLists, lexicon):
-    """
-    Build a forward index with Word IDs based on the lexicon.
-    :param datasetPaths: List of paths to the datasets
-    :param columnLists: List of lists containing column names to process for each dataset
-    :param lexicon: Dictionary mapping words to their unique Word IDs
-    :return: Forward index dictionary
-    """
-    forward_index = defaultdict(list)
+# def buildForwardIndex(datasetPaths, columnLists, lexicon):
+#     """
+#     Build a forward index with Word IDs based on the lexicon.
+#     :param datasetPaths: List of paths to the datasets
+#     :param columnLists: List of lists containing column names to process for each dataset
+#     :param lexicon: Dictionary mapping words to their unique Word IDs
+#     :return: Forward index dictionary
+#     """
+#     forward_index = defaultdict(list)
+#
+#     for datasetPath, columnList in zip(datasetPaths, columnLists):
+#         print(f"Processing dataset: {datasetPath}")
+#         try:
+#             for chunk in pd.read_csv(datasetPath, chunksize=10_000):
+#                 if 'DocID' not in chunk.columns:
+#                     print(f"Error: 'DocID' column not found in the dataset '{datasetPath}'.")
+#                     continue
+#
+#                 for _, row in chunk.iterrows():
+#                     doc_id = row['DocID']
+#                     combined_text = []
+#
+#                     # Combine and preprocess text from all specified columns
+#                     for column in columnList:
+#                         if column in row and pd.notna(row[column]):
+#                             combined_text.extend(preprocessText(row[column]))
+#
+#                     # Replace words with Word IDs
+#                     word_ids_with_positions = [
+#                         (lexicon[word], position) for position, word in enumerate(combined_text) if word in lexicon
+#                     ]
+#
+#                     # Add to the forward index
+#                     forward_index[doc_id].extend(word_ids_with_positions)
+#
+#         except FileNotFoundError:
+#             print(f"Error: File '{datasetPath}' not found.")
+#         except Exception as e:
+#             print(f"Unexpected error while processing '{datasetPath}': {e}")
+#
+#     return forward_index
+#
+#
+#
+# def saveForwardIndexToJSON(forward_index, output_file_path):
+#     """
+#     Save the forward index to a JSON file using the standard JSON library.
+#     :param forward_index: The forward index dictionary
+#     :param output_file_path: Path to the output JSON file
+#     """
+#     try:
+#         # Prepare forward index for JSON serialization
+#         json_ready_index = {
+#             str(doc_id): [[word_id, position] for word_id, position in words_with_positions]
+#             for doc_id, words_with_positions in forward_index.items()
+#         }
+#
+#         # Save to JSON file
+#         with open(output_file_path, 'w') as json_file:
+#             json.dump(json_ready_index, json_file, indent=2)
+#
+#         print(f"Forward index saved successfully to {output_file_path}")
+#     except Exception as e:
+#         print(f"Error saving forward index to JSON file: {e}")
 
+
+def buildForwardIndex(datasetPaths, columnLists, lexicon):
+    """Build forward index with enhanced word position tracking and metadata"""
+    forward_index = defaultdict(lambda: {
+        "metadata": {
+            "doc_length": 0,
+            "has_content": False
+        },
+        "words": defaultdict(lambda: {
+            "positions": [],
+            "frequency": 0,
+            "in_title": False
+        })
+    })
+
+    total_docs = 0
     for datasetPath, columnList in zip(datasetPaths, columnLists):
         print(f"Processing dataset: {datasetPath}")
         try:
+            # Get total number of chunks for progress
+            
             for chunk in pd.read_csv(datasetPath, chunksize=10_000):
+
                 if 'DocID' not in chunk.columns:
-                    print(f"Error: 'DocID' column not found in the dataset '{datasetPath}'.")
+                    print(f"Error: 'DocID' column not found in '{datasetPath}'")
                     continue
 
                 for _, row in chunk.iterrows():
-                    doc_id = row['DocID']
-                    combined_text = []
+                    try:
+                        doc_id = row['DocID']
+                        word_count = 0
+                        position = 0
 
-                    # Combine and preprocess text from all specified columns
-                    for column in columnList:
-                        if column in row and pd.notna(row[column]):
-                            combined_text.extend(preprocessText(row[column]))
+                        # Process title
+                        if 'title' in columnList and pd.notna(row['title']):
+                            try:
+                                title_text = str(row['title'])
+                                title_words = preprocessText(title_text)
+                                word_count += len(title_words)
 
-                    # Replace words with Word IDs
-                    word_ids_with_positions = [
-                        (lexicon[word], position) for position, word in enumerate(combined_text) if word in lexicon
-                    ]
+                                for word in title_words:
+                                    if word in lexicon:
+                                        word_id = lexicon[word]
+                                        forward_index[doc_id]["words"][word_id]["positions"].append(position)
+                                        forward_index[doc_id]["words"][word_id]["frequency"] += 1
+                                        forward_index[doc_id]["words"][word_id]["in_title"] = True
+                                    position += 1
+                            except Exception as e:
+                                print(f"Error processing title for DocID {doc_id}: {e}")
 
-                    # Add to the forward index
-                    forward_index[doc_id].extend(word_ids_with_positions)
+                        # Process other columns
+                        for column in columnList:
+                            if column != 'title' and column in row and pd.notna(row[column]):
+                                try:
+                                    column_text = str(row[column])
+                                    words = preprocessText(column_text)
+                                    word_count += len(words)
 
-        except FileNotFoundError:
-            print(f"Error: File '{datasetPath}' not found.")
+                                    for word in words:
+                                        if word in lexicon:
+                                            word_id = lexicon[word]
+                                            forward_index[doc_id]["words"][word_id]["positions"].append(position)
+                                            forward_index[doc_id]["words"][word_id]["frequency"] += 1
+                                        position += 1
+                                except Exception as e:
+                                    print(f"Error processing column {column} for DocID {doc_id}: {e}")
+                        
+                        # Update metadata
+                        forward_index[doc_id]["metadata"]["doc_length"] = word_count
+                        
+                        # Check content specifically
+                        if ('content' in columnList and pd.notna(row['content']) and 
+                            isinstance(row['content'], str) and row['content'].strip()):
+                            forward_index[doc_id]["metadata"]["has_content"] = True
+                        
+                        total_docs += 1
+                        
+                    except Exception as e:
+                        print(f"Error processing document {doc_id}: {e}")
+                        continue
+
         except Exception as e:
-            print(f"Unexpected error while processing '{datasetPath}': {e}")
+            print(f"Error processing dataset {datasetPath}: {e}")
 
+    print(f"Finished processing {total_docs} documents")
     return forward_index
 
 
-
 def saveForwardIndexToJSON(forward_index, output_file_path):
-    """
-    Save the forward index to a JSON file using the standard JSON library.
-    :param forward_index: The forward index dictionary
-    :param output_file_path: Path to the output JSON file
-    """
     try:
-        # Prepare forward index for JSON serialization
         json_ready_index = {
-            str(doc_id): [[word_id, position] for word_id, position in words_with_positions]
-            for doc_id, words_with_positions in forward_index.items()
+            str(doc_id): {
+                "metadata": doc_data["metadata"],
+                "words": {
+                    str(word_id): {
+                        "positions": info["positions"],
+                        "frequency": info["frequency"],
+                        "in_title": info["in_title"]
+                    }
+                    for word_id, info in doc_data["words"].items()
+                }
+            }
+            for doc_id, doc_data in forward_index.items()
         }
 
-        # Save to JSON file
         with open(output_file_path, 'w') as json_file:
             json.dump(json_ready_index, json_file, indent=2)
 
-        print(f"Forward index saved successfully to {output_file_path}")
     except Exception as e:
-        print(f"Error saving forward index to JSON file: {e}")
-
-
-
-
+        print(f"Error saving forward index: {e}")
 
 
 # import numpy as np

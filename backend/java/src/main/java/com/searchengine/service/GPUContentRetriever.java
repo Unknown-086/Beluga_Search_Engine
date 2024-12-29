@@ -2,7 +2,6 @@ package com.searchengine.service;
 
 import com.searchengine.model.SearchResult;
 import org.springframework.stereotype.Service;
-import org.springframework.cache.annotation.Cacheable;
 import javax.annotation.PostConstruct;
 import java.util.concurrent.*;
 import java.util.*;
@@ -12,7 +11,6 @@ import java.io.*;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
-import com.univocity.parsers.csv.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,6 +108,8 @@ public class GPUContentRetriever {
             put("description", 3);      // title
             put("source", 2);           // subreddit
             put("url", 7);              // url
+            put("score", 8);            // Score
+            put("num_comments", 9);     // num_comments
         }});
         
         DATASET_COLUMNS.put("WeeklyNewsDataset_Aug17", new HashMap<>() {{
@@ -139,9 +139,19 @@ public class GPUContentRetriever {
         return null;
     }
 
+    public List<Integer> filterDocIdsByDataset(List<Integer> docIds, String... datasets) {
+        // Create set of allowed datasets for O(1) lookup
+        Set<String> allowedDatasets = new HashSet<>(Arrays.asList(datasets));
+        System.out.println("running");
+        return docIds.parallelStream()
+            .filter(docId -> {
+                String datasetName = identifyDataset(docId);
+                return datasetName != null && allowedDatasets.contains(datasetName);
+            })
+            .collect(Collectors.toList());
+    }
+
     private SearchResult createSearchResult(int docId, String[] line, Map<String, Integer> columnMap) {
-        ///////////////////////////////////
-        // System.out.println("ok");
         SearchResult result = new SearchResult();
         result.setDocId(docId);
         try {
@@ -149,31 +159,31 @@ public class GPUContentRetriever {
             result.setDescription(line[columnMap.get("description")]);
             result.setUrl(line[columnMap.get("url")]);
             result.setSource(line[columnMap.get("source")]);
+            
+            String datasetName = identifyDataset(docId);
+            if (datasetName != null && datasetName.equals("RedditDataset")) {
+                result.setIsReddit(true);
+                try {
+                    String scoreStr = line[columnMap.get("score")];
+                    String commentsStr = line[columnMap.get("num_comments")];
+                    
+                    // Parse as double first then convert to int
+                    int score = (int) Double.parseDouble(scoreStr.trim());
+                    int numComments = (int) Double.parseDouble(commentsStr.trim());
+                    
+                    result.setScore(score);
+                    result.setNumComments(numComments);
+                } catch (NumberFormatException e) {
+                    logger.error("Error parsing Reddit metrics for DocID {}: {}", docId, e.getMessage());
+                    result.setScore(0);
+                    result.setNumComments(0);
+                }
+            }
         } catch (Exception e) {
-            logger.warn("Error creating search result for docId {}: {}", docId, e.getMessage());
+            logger.error("Error creating search result for docId {}: {}", docId, e.getMessage());
         }
-    
-        ///////////////////////////////////////////////
-        // System.out.println(result.getUrl());
         return result;
     }
-
-
-    // private List<String[]> loadDataset(String path) {
-    //     return DATASET_CACHE.computeIfAbsent(path, k -> {
-    //         logger.info("Loading dataset from: {}", k);
-    //         try (CSVReader reader = new CSVReader(new FileReader(k))) {
-    //             reader.skip(1);
-    //             List<String[]> data = reader.readAll();
-    //             logger.info("Loaded {} rows from dataset", data.size());
-    //             return data;
-    //         } catch (Exception e) {
-    //             // logger.error("Error loading dataset {}: {}", k, e.getMessage());
-    //             return new ArrayList<>();
-    //         }
-    //     });
-    // }
-
     private List<String[]> loadDataset(String path) {
         return DATASET_CACHE.computeIfAbsent(path, k -> {
             logger.info("Loading dataset from: {}", k);
@@ -219,136 +229,38 @@ public class GPUContentRetriever {
         });
     }
 
-
-    // private List<String[]> loadDataset(String path) {
-    //     return DATASET_CACHE.computeIfAbsent(path, k -> {
-    //         logger.info("Loading dataset from: {}", k);
-    //         try {
-    //             CSVReader reader;
-    //             if (k.contains("RedditDataset")) {
-    //                 // Custom configuration for Reddit dataset
-    //                 reader = new CSVReaderBuilder(new FileReader(k))
-    //                     .withCSVParser(new CSVParserBuilder()
-    //                         .withSeparator(',')
-    //                         .withQuoteChar('"')
-    //                         .withEscapeChar('\\')
-    //                         .withStrictQuotes(false)
-    //                         .withIgnoreLeadingWhiteSpace(true)
-    //                         .build())
-    //                     .withSkipLines(1)
-    //                     .build();
-    //             } else {
-    //                 reader = new CSVReader(new FileReader(k));
-    //                 reader.skip(1);
-    //             }
-
-    //             List<String[]> data = new ArrayList<>();
-    //             String[] line;
-    //             while ((line = reader.readNext()) != null) {
-    //                 // Validate row has required columns
-    //                 if (line.length >= 8 && isValidDocId(line[0])) {
-    //                     data.add(line);
-    //                 } else {
-    //                     logger.warn("Skipping invalid row: {}", Arrays.toString(line));
-    //                 }
-    //             }
-    //             logger.info("Loaded {} rows from dataset", data.size());
-    //             return data;
-    //         } catch (Exception e) {
-    //             logger.error("Error loading dataset {}: {}", k, e.getMessage());
-    //             return new ArrayList<>();
-    //         }
-    //     });
-    // }
-
-
-    // private List<String[]> loadDataset(String path) {
-    //     return DATASET_CACHE.computeIfAbsent(path, k -> {
-    //         logger.info("Loading dataset from: {}", k);
-    //         try {
-    //             CsvParserSettings settings = new CsvParserSettings();
-    //             // Common settings
-    //             settings.setMaxCharsPerColumn(1000000);
-    //             settings.setMaxColumns(512);
-    //             settings.setSkipEmptyLines(true);
-    //             settings.setInputBufferSize(1048576 * 4);
-                
-    //             // Dataset specific settings
-    //             if (k.contains("WeeklyNewsDataset")) {
-    //                 settings.setDelimiterDetectionEnabled(true);
-    //                 settings.setQuoteDetectionEnabled(true);
-    //                 settings.setFormatDetectorRowSampleCount(100);
-    //                 settings.setLineSeparatorDetectionEnabled(true);
-    //             }
-                
-    //             // Debug: Read first few lines of file
-    //             try (BufferedReader debugReader = new BufferedReader(new FileReader(k))) {
-    //                 String firstLine = debugReader.readLine();
-    //                 // logger.info("First line of file: {}", firstLine);
-    //             }
-                
-    //             CsvParser parser = new CsvParser(settings);
-    //             List<String[]> data = new ArrayList<>();
-                
-    //             int lineCount = 0;
-    //             try (Reader reader = new BufferedReader(new FileReader(k))) {
-    //                 parser.beginParsing(reader);
-    //                 String[] header = parser.parseNext(); // store header
-    //                 // logger.info("Header: {}", Arrays.toString(header));
-                    
-    //                 String[] line;
-    //                 while ((line = parser.parseNext()) != null) {
-    //                     if (line.length >= 8 && isValidDocId(line[0])) {
-    //                         data.add(line);
-    //                         if (lineCount < 2) { // Debug first two lines
-    //                             // logger.info("Sample line {}: {}", lineCount, Arrays.toString(line));
-    //                         }
-    //                     } else {
-    //                         // logger.warn("Invalid line: length={}, content={}", line.length, Arrays.toString(line));
-    //                     }
-    //                     lineCount++;
-    //                 }
-    //             }
-                
-    //             logger.info("Processed {} lines, loaded {} valid rows", lineCount, data.size());
-    //             return data;
-                
-    //         } catch (Exception e) {
-    //             logger.error("Error loading dataset {}: {}", k, e.getMessage(), e);
-    //             return new ArrayList<>();
-    //         }
-    //     });
-    // }
-
-    
-    // private boolean isValidDocId(String docId) {
-    //     try {
-    //         return docId.matches("^\\d{7}$");
-    //     } catch (Exception e) {
-    //         return false;
-    //     }
-    // }
-
-    public List<SearchResult> getContentGPU(List<Integer> docIds, int page) {
+    public List<Object> getContentGPU(List<Integer> docIds, int page) {
         if (docIds == null || docIds.isEmpty()) {
-            return Collections.emptyList();
+            return Arrays.asList(Collections.emptyList(), 0);
         }
-
+    
+        // String[] redditDataset = {
+        //     "GlobalNewsDataset"
+        // };
+        
+        // docIds = filterDocIdsByDataset(docIds, redditDataset);
+        int totalFilteredResults = docIds.size();
+    
         // Calculate pagination bounds
         int startIndex = (page - 1) * PAGE_SIZE;
         int endIndex = Math.min(startIndex + PAGE_SIZE, docIds.size());
         
         // Get subset of docIds for current page
         List<Integer> pageDocIds = docIds.subList(startIndex, endIndex);
-
+    
         // Process page batch
-        return pageDocIds.parallelStream()
+        List<SearchResult> results = pageDocIds.parallelStream()
             .collect(Collectors.groupingBy(id -> id / BATCH_SIZE))
             .values()
             .parallelStream()
             .map(batch -> processBatch(batch))
             .flatMap(Collection::stream)
             .collect(Collectors.toList());
+
+        results.sort(Comparator.comparingInt(result -> 
+            pageDocIds.indexOf(result.getDocId())));
+    
+        return Arrays.asList(results, totalFilteredResults);
     }
 
     // Add method to get total results count
@@ -357,30 +269,17 @@ public class GPUContentRetriever {
     }
 
     private List<SearchResult> processBatch(List<Integer> batch) {
-        ////////////////////////////
 
         return batch.parallelStream()
             .map(docId -> {
                 String datasetName = identifyDataset(docId);
-                
-                ////////////////////////
-                // System.out.println(datasetName);
 
                 if (datasetName == null) return null;
-                //////////////////////
-                // System.out.println("ok3");
                 Map<Integer, String[]> dataset = indexedDatasets.get(datasetName);
                 if (dataset == null) return null;
-                ////////////////////////////////////
-                // System.out.println("ok4");
                 String[] line = dataset.get(docId);
 
-                /////////////////////////////
-                // System.out.println(line);
-                // System.out.println(docId);
                 if (line == null) return null;
-                ////////////////////////////
-                // System.out.println("ok5");
                 return createSearchResult(docId, line, DATASET_COLUMNS.get(datasetName));
             })
             .filter(Objects::nonNull)

@@ -9,7 +9,7 @@ from src.Barrels.HashBarrelMaker import createHashedBarrels
 
 # Main execution
 if __name__ == "__main__":
-    invertedIndexPath = os.path.join('../..', 'data', 'InvertedIndexData', 'Testing', 'InvertedIndex_Testing.json')
+    invertedIndexPath = os.path.join('../..', 'data', 'InvertedIndexData', 'Testing', 'InvertedIndex_Sorted_Testing.json')
 
 
     # For Testing Range Barrels
