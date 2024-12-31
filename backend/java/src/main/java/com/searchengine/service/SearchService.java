@@ -83,7 +83,7 @@ public class SearchService {
         createDirectoriesIfNeeded();
         verifyPaths();
     }
-
+   
     
     
     private void createDirectoriesIfNeeded() {
