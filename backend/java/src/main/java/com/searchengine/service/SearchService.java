@@ -77,7 +77,7 @@ public class SearchService {
             .getParentFile();
         
         this.basePath = new File(projectDir, "data").getAbsolutePath();
-        this.lexiconPath = new File(basePath, "Lexicons/Testing/Lexicon_Testing.json").getAbsolutePath();
+        this.lexiconPath = new File(basePath, "Lexicons/Testing/Lexicon_Testing_User.json").getAbsolutePath();
         this.barrelMetadataPath = new File(basePath, "BarrelData/Testing/PathData/Barrels_Testing_Metadata.json").getAbsolutePath();
         
         createDirectoriesIfNeeded();
@@ -98,27 +98,6 @@ public class SearchService {
         if (!new File(barrelMetadataPath).exists()) {
             throw new RuntimeException("Barrel metadata file not found: " + barrelMetadataPath);
         }
-    }
-
-    private static final Map<String, String> DATASET_PATHS = new HashMap<>();
-    
-    @PostConstruct
-    private void initializePaths() {
-        DATASET_PATHS.put("GlobalNewsDataset", new File(basePath, "Testing/GlobalNewsDataset_Testing.csv").getAbsolutePath());
-        DATASET_PATHS.put("RedditDataset", new File(basePath, "Testing/RedditDatabase_Testing.csv").getAbsolutePath());
-        DATASET_PATHS.put("WeeklyNewsDataset_Aug17", new File(basePath, "Testing/WeeklyNewsDataset_Aug17_Testing.csv").getAbsolutePath());
-        DATASET_PATHS.put("WeeklyNewsDataset_Aug18", new File(basePath, "Testing/WeeklyNewsDataset_Aug18_Testing.csv").getAbsolutePath());
-    }
-
-    private String resolveBarrelPath(String relativePath) {
-        if (relativePath.startsWith("../")) {
-            // Convert relative path to absolute
-            File projectRoot = new File(System.getProperty("user.dir"))
-                .getParentFile()  // java
-                .getParentFile(); // backend
-            return new File(projectRoot, relativePath.replace("../..", "")).getAbsolutePath();
-        }
-        return relativePath;
     }
 
     public Map<String, Object> search(String query, int page, String source) {
@@ -167,76 +146,47 @@ public class SearchService {
         try {
             long startTime = System.currentTimeMillis();
             
-            // Parallel word document retrieval
-            Map<Integer, Map<String, Double>> wordDocuments = words.parallelStream()
-                .map(word -> {
-                    int wordId = getLexiconWordIdFromCache(word);
-                    if (wordId == 0) return null;
-                    
-                    String barrelPath = getBarrelPathFromCache(wordId);
-                    if (barrelPath.isEmpty()) return null;
-                    
-                    Map<String, Double> docRanks = getDocIdsWithRanks(barrelPath, wordId);
-                    return new AbstractMap.SimpleEntry<>(wordId, docRanks);
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toMap(
-                    Map.Entry::getKey,
-                    Map.Entry::getValue
-                ));
-    
-            logger.info("Word documents retrieved in {}ms", System.currentTimeMillis() - startTime);
-            
-            // Fast intersection using HashSet
-            Map<String, Integer> docIntersections = new HashMap<>();
-            Map<String, Double> docScores = new HashMap<>();
-            
-            Set<String> allDocIds = wordDocuments.values().stream()
-                .flatMap(m -> m.keySet().stream())
-                .collect(Collectors.toSet());
+            // Get docIds and ranks for each word
+            Map<String, Map<String, Double>> wordDocuments = new HashMap<>();
+            for (String word : words) {
+                int wordId = getLexiconWordIdFromCache(word);
+                if (wordId == 0) continue;
                 
-            for (String docId : allDocIds) {
-                int intersectCount = 0;
-                double totalRank = 0.0;
+                String barrelPath = getBarrelPathFromCache(wordId);
+                if (barrelPath.isEmpty()) continue;
                 
-                for (Map<String, Double> wordDocs : wordDocuments.values()) {
-                    Double rank = wordDocs.get(docId);
-                    if (rank != null) {
-                        intersectCount++;
-                        totalRank += rank;
-                    }
-                }
-                
-                if (intersectCount > 0) {
-                    docIntersections.put(docId, intersectCount);
-                    docScores.put(docId, totalRank);
-                }
+                Map<String, Double> docRanks = getDocIdsWithRanks(barrelPath, wordId);
+                wordDocuments.put(word, docRanks);
             }
     
-                // Sort and convert to final format
-            List<Integer> finalDocIds = docIntersections.entrySet().stream()
-                .sorted(Map.Entry.<String, Integer>comparingByValue()
-                    .reversed()
-                    .thenComparing((e1, e2) -> 
-                        docScores.get(e2.getKey()).compareTo(docScores.get(e1.getKey()))
-                    ))
-                .map(e -> Integer.parseInt(e.getKey()))
-                .collect(Collectors.toList());
-
+            if (wordDocuments.isEmpty()) {
+                return createEmptyResponse();
+            }
+    
+            // Group by intersection levels
+            Map<Integer, Map<String, Double>> intersectionLevels = groupByIntersection(wordDocuments);
+            
+            // Get max intersection level (number of words that matched)
+            int maxLevel = words.size();
+            
+            // Combine and sort results by intersection level and rank
+            List<Integer> finalDocIds = combineAndSortResults(intersectionLevels, maxLevel);
+    
             logger.info("Results processed in {}ms", System.currentTimeMillis() - startTime);
                 
             List<Object> contentResult = gpuContentRetriever.getContentGPU(finalDocIds, page, source);
             return createResponse(contentResult, page);
-
-        } 
-        catch (Exception e) {
+    
+        } catch (Exception e) {
             logger.error("Error in multi-word search: {}", e.getMessage());
             return createEmptyResponse();
         }
     }
     
-    private Map<Integer, Map<String, Double>> groupByIntersection(Map<Integer, Map<String, Double>> wordDocuments) {
+    private Map<Integer, Map<String, Double>> groupByIntersection(Map<String, Map<String, Double>> wordDocuments) {
         Map<Integer, Map<String, Double>> intersectionLevels = new HashMap<>();
+        
+        // Get all unique docIds
         Set<String> allDocIds = wordDocuments.values().stream()
                 .flatMap(m -> m.keySet().stream())
                 .collect(Collectors.toSet());
@@ -245,6 +195,7 @@ public class SearchService {
             int intersectionCount = 0;
             double totalRank = 0.0;
             
+            // Count document appearances and sum ranks
             for (Map<String, Double> wordDocs : wordDocuments.values()) {
                 if (wordDocs.containsKey(docId)) {
                     intersectionCount++;
@@ -252,6 +203,7 @@ public class SearchService {
                 }
             }
             
+            // Group by intersection count
             intersectionLevels.computeIfAbsent(intersectionCount, k -> new HashMap<>())
                     .put(docId, totalRank);
         }
@@ -260,9 +212,12 @@ public class SearchService {
     
     private List<Integer> combineAndSortResults(Map<Integer, Map<String, Double>> intersectionLevels, int maxLevel) {
         List<String> orderedDocIds = new ArrayList<>();
+        
+        // Process from highest to lowest intersection level
         for (int level = maxLevel; level > 0; level--) {
             Map<String, Double> docsAtLevel = intersectionLevels.get(level);
             if (docsAtLevel != null) {
+                // Sort docs at this level by rank
                 List<String> sortedDocs = docsAtLevel.entrySet().stream()
                         .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
                         .map(Map.Entry::getKey)
@@ -271,6 +226,7 @@ public class SearchService {
             }
         }
         
+        // Convert to integers for final result
         return orderedDocIds.stream()
                 .map(Integer::parseInt)
                 .collect(Collectors.toList());

@@ -31,6 +31,10 @@ nltk==3.9.1
 boto3==1.35.87
 orjson==3.10.12
 
+# For Web Scraping
+requests>=2.31.0
+beautifulsoup4>=4.12.2
+lxml>=5.1.0
 
 ###############################################
 # annotated-types   0.7.0

@@ -11,6 +11,7 @@ import java.io.*;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
+import com.opencsv.exceptions.CsvException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,9 +24,7 @@ public class GPUContentRetriever {
     private static final Map<String, Map<String, Integer>> DATASET_COLUMNS = new ConcurrentHashMap<>();
     private static final Map<String, String> DATASET_PATHS = new ConcurrentHashMap<>();
     private static final int BATCH_SIZE = 10000;
-    private static final int THREAD_POOL_SIZE = Runtime.getRuntime().availableProcessors();
     private final Map<String, Map<Integer, String[]>> indexedDatasets = new ConcurrentHashMap<>();
-    private final ExecutorService executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
     private static final int PAGE_SIZE = 100;
 
     @PostConstruct
@@ -44,13 +43,18 @@ public class GPUContentRetriever {
         put("RedditDataset", new int[]{1105352, 1519554});
         put("WeeklyNewsDataset_Aug17", new int[]{1519555, 1979142});
         put("WeeklyNewsDataset_Aug18", new int[]{1979143, 2455685});
+        // UserContent range will be added dynamically
     }};
 
     private void preloadDatasets() {
         DATASET_PATHS.forEach((name, path) -> {
-            List<String[]> data = loadDataset(path);
-            indexDataset(name, data);
-            logger.info("Preloaded and indexed dataset: {}", name);
+            if (new File(path).exists()) {  // Add existence check
+                List<String[]> data = loadDataset(path);
+                indexDataset(name, data);
+                logger.info("Preloaded and indexed dataset: {}", name);
+            } else {
+                logger.warn("Dataset file not found: {}", path);
+            }
         });
     }
 
@@ -93,6 +97,8 @@ public class GPUContentRetriever {
             new File(dataPath, "Testing/WeeklyNewsDataset_Aug17_Testing.csv").getAbsolutePath());
         DATASET_PATHS.put("WeeklyNewsDataset_Aug18", 
             new File(dataPath, "Testing/WeeklyNewsDataset_Aug18_Testing.csv").getAbsolutePath());
+        DATASET_PATHS.put("UserContent", 
+            new File(dataPath, "UserContent/UserContent.csv").getAbsolutePath());
         
 
         // Initialize all column mappings
@@ -125,6 +131,45 @@ public class GPUContentRetriever {
             put("source", 2);           // feed_code
             put("url", 3);              // source_url
         }});
+
+        DATASET_COLUMNS.put("UserContent", new HashMap<>() {{
+            put("title", 1);       // title is column 1
+            put("description", 2); // description is column 2
+            put("content", 3);     // content is column 3 
+            put("url", 4);         // url is column 4
+            put("source", 5);      // source is column 5
+        }});
+
+        // Load UserContent and update ranges
+        File userContentFile = new File(DATASET_PATHS.get("UserContent"));
+        if (userContentFile.exists()) {
+            try (CSVReader reader = new CSVReader(new FileReader(userContentFile))) {
+                reader.skip(1); // Skip header
+                
+                List<String[]> data = reader.readAll();
+                if (!data.isEmpty()) {
+                    int minDocId = Integer.MAX_VALUE;
+                    int maxDocId = Integer.MIN_VALUE;
+                    
+                    for (String[] line : data) {
+                        try {
+                            int docId = Integer.parseInt(line[0].trim());
+                            minDocId = Math.min(minDocId, docId);
+                            maxDocId = Math.max(maxDocId, docId);
+                        } catch (NumberFormatException e) {
+                            logger.warn("Invalid docId in line: {}", line[0]);
+                        }
+                    }
+                    
+                    if (minDocId != Integer.MAX_VALUE && maxDocId != Integer.MIN_VALUE) {
+                        DATASET_RANGES.put("UserContent", new int[]{minDocId, maxDocId});
+                        logger.info("Added UserContent range: [{}, {}]", minDocId, maxDocId);
+                    }
+                }
+            } catch (IOException | CsvException e) {
+                logger.error("Error reading UserContent dataset: {}", e.getMessage());
+            }
+        }
         
         logger.info("Initialized all dataset paths and column mappings");
     }
@@ -142,7 +187,6 @@ public class GPUContentRetriever {
     public List<Integer> filterDocIdsByDataset(List<Integer> docIds, String... datasets) {
         // Create set of allowed datasets for O(1) lookup
         Set<String> allowedDatasets = new HashSet<>(Arrays.asList(datasets));
-        System.out.println("running");
         return docIds.parallelStream()
             .filter(docId -> {
                 String datasetName = identifyDataset(docId);
@@ -184,6 +228,7 @@ public class GPUContentRetriever {
         }
         return result;
     }
+    
     private List<String[]> loadDataset(String path) {
         return DATASET_CACHE.computeIfAbsent(path, k -> {
             logger.info("Loading dataset from: {}", k);
@@ -241,8 +286,8 @@ public class GPUContentRetriever {
                 case "reddit":
                     datasets = new String[]{"RedditDataset"};
                     break;
-                case "news":
-                    datasets = new String[]{"GlobalNewsDataset", "WeeklyNewsDataset_Aug17", "WeeklyNewsDataset_Aug18"};
+                    case "news":
+                    datasets = new String[]{ "GlobalNewsDataset", "WeeklyNewsDataset_Aug17", "WeeklyNewsDataset_Aug18", "UserContent" };
                     break;
                 default:
                     datasets = DATASET_RANGES.keySet().toArray(new String[0]);

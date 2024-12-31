@@ -95,3 +95,99 @@ function updateLang(value) {
         localStorage.setItem('lang', langValue);
     }
 }
+
+async function fetchContent() {
+    const urlInput = document.getElementById('link');
+    const errorElement = document.getElementById('url-error');
+    const url = urlInput.value;
+
+    // Clear previous error
+    errorElement.textContent = '';
+    
+    if (!url) {
+        errorElement.textContent = 'Please enter a URL';
+        return;
+    }
+
+    try {
+        // Validate URL format
+        new URL(url);
+        
+        const response = await fetch(`/api/fetch-content?url=${encodeURIComponent(url)}`);
+        const data = await response.json();
+        
+        if (data.error) {
+            if (data.error.includes('HTTPError')) {
+                errorElement.textContent = 'Website does not allow content fetching';
+            } else if (data.error.includes('Invalid URL')) {
+                errorElement.textContent = 'Invalid URL format';
+            } else {
+                errorElement.textContent = "Failed to fetch content. This Website doesn't allow content fetching";
+            }
+            return;
+        }
+        
+        // Update form fields
+        document.getElementById('title').value = data.title || '';
+        document.getElementById('description').value = data.description || '';
+        document.getElementById('content').value = data.content || '';
+        
+    } catch (error) {
+        if (error instanceof TypeError) {
+            errorElement.textContent = 'Invalid URL format';
+        } else {
+            errorElement.textContent = 'Failed to fetch content';
+        }
+    }
+}
+
+async function handleSubmit(event) {
+    event.preventDefault();
+    
+    const formData = {
+        url: document.getElementById('link').value,
+        title: document.getElementById('title').value,
+        description: document.getElementById('description').value || '',
+        content: document.getElementById('content').value || ''
+    };
+
+    const errorElement = document.getElementById('url-error');
+    errorElement.textContent = ''; // Clear previous errors
+
+    try {
+        const response = await fetch('/api/add-content', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert('Content added successfully!');
+            window.location.href = '/';
+        } else {
+            // Check for duplicate URL error
+            if (data.error && data.error.includes('URL already exists')) {
+                errorElement.textContent = 'This URL has already been added to the dataset';
+            } else {
+                errorElement.textContent = data.error || 'Failed to add content';
+            }
+        }
+    } catch (error) {
+        errorElement.textContent = 'Error adding content: ' + error.message;
+    }
+}
+
+function handleSearch(event) {
+    event.preventDefault();
+    const query = document.getElementById('searchInput').value;
+    const source = document.getElementById('sourceSelect').value;
+    const lang = document.getElementById('langSelect').value;
+    
+    if (query) {
+        window.location.href = `/results?q=${encodeURIComponent(query)}&page=1&source=${source}&lang=${lang}`;
+    }
+}

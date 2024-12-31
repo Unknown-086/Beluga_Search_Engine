@@ -10,20 +10,34 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, FileResponse
+from pydantic import BaseModel
+from fastapi.responses import JSONResponse
 from typing import List, Dict
 import httpx
 import time
 from math import ceil
 from src.Lexicon.TextPreprocess import preprocessText, preprocessLanguageText
-
+from src.ContentAddition.DatasetManager import DatasetManager
+from src.CrawlingWebLinks.CrawlUrl import scrape_website
+from pydantic import BaseModel, HttpUrl
+from typing import Optional
 
 app = FastAPI()
+
+# For Content Addition
+dataset_manager = DatasetManager()
 
 # Setup paths
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "..", "frontend", "templates")
 STATIC_DIR = os.path.join(BASE_DIR, "..", "frontend", "static")
 
+class ContentRequest(BaseModel):
+    url: str
+    title: str
+    description: Optional[str] = None
+    content: Optional[str] = None
+    source: Optional[str] = "user_added"
 
 # CORS and Static Files
 app.add_middleware(
@@ -144,3 +158,55 @@ async def search(q: str) -> List[Dict]:
     except httpx.RequestError as e:
         raise HTTPException(status_code=503, detail=f"Java service unavailable: {str(e)}")
 
+
+@app.get("/add", response_class=HTMLResponse)
+async def add_content_page(request: Request):
+    return templates.TemplateResponse("add_content.html", {
+        "request": request
+    })
+
+
+@app.get("/api/fetch-content")
+async def fetch_content(url: str):
+    try:
+        content = scrape_website(url)
+        if 'error' in content:
+            return JSONResponse(
+                status_code=400,
+                content={'error': content['error']}
+            )
+        return JSONResponse(content)
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={'error': str(e)}
+        )
+
+@app.post("/api/add-content")
+async def add_content(content: ContentRequest):
+    try:
+        dataset_manager.initialize_dataset()
+        doc_id = dataset_manager.get_next_doc_id()  # Already returns string
+        
+        result = dataset_manager.add_new_content({
+            'DocID': doc_id,  # No conversion needed
+            'title': content.title,
+            'description': content.description or '',
+            'content': content.content or '',
+            'url': content.url,
+            'source': 'user_added'
+        })
+        
+        if 'error' in result:
+            return JSONResponse(
+                status_code=400,
+                content={'error': result['error']}
+            )
+            
+        return JSONResponse(content={'status': 'success'})
+        
+    except Exception as e:
+        return JSONResponse(
+            status_code=500, 
+            content={'error': str(e)}
+        )

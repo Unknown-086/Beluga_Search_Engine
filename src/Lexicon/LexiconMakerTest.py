@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
     columnLists = [
         [ 'published_at', 'source_name', 'author', 'title', 'description', 'url', 'url_to_image', 'content', 'category', 'full_content' ],
-        [ 'created_date', 'subreddit', 'title', 'author', 'full_link', 'post'],
+        [ 'created_date', 'subreddit', 'title', 'author', 'full_link', 'content'],
         [ 'publish_time', 'feed_code', 'source_url', 'headline_text'] ,
         [ 'publish_time', 'feed_code', 'source_url', 'headline_text' ]
     ]

@@ -90,3 +90,6 @@ def getBarrelForHashed(word_id, metadata_path):
     except Exception as e:
         print(f"Unexpected error: {e}")
         return None, []
+
+
+print(getBarrelForHashed(1545106, 'D:\\zDSA Project\\PartOne\\Search_Engine_DSA_project\\data\\BarrelData\\Testing\\PathData\\Barrels_Testing_Metadata.json'))
